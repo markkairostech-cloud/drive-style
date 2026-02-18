@@ -1,16 +1,11 @@
 "use client";
+
 import { useMemo, useState } from "react";
 
-<input
-  name="company"
-  style={{ display: "none" }}
-  tabIndex={-1}
-  autoComplete="off"
-/>
-
-
 export default function Page() {
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
+    "idle"
+  );
   const [error, setError] = useState<string>("");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -66,7 +61,9 @@ export default function Page() {
               <div style={styles.brandMark} aria-hidden />
               <div>
                 <div style={styles.brandName}>Drive Style</div>
-                <div style={styles.brandTag}>Vehicle concierge advice • South Africa</div>
+                <div style={styles.brandTag}>
+                  Vehicle concierge advice • South Africa
+                </div>
               </div>
             </div>
 
@@ -96,8 +93,9 @@ export default function Page() {
                 Buy the right car with confidence — without the dealer headache.
               </h1>
               <p style={styles.lede}>
-                Tell us your budget, needs, and preferences. We’ll send a shortlist that fits your
-                lifestyle, with clear pros/cons and next steps — tuned for South Africa.
+                Tell us your budget, needs, and preferences. We’ll send a
+                shortlist that fits your lifestyle, with clear pros/cons and
+                next steps — tuned for South Africa.
               </p>
 
               <div style={styles.heroCtas}>
@@ -123,11 +121,20 @@ export default function Page() {
                 <div style={styles.cardBadge}>Free</div>
               </div>
               <p style={styles.cardSub}>
-                Fill this in and we’ll reply with tailored vehicle options and guidance.
+                Fill this in and we’ll reply with tailored vehicle options and
+                guidance.
               </p>
-<RouteTestButton />
+
               <form id="lead" onSubmit={onSubmit} style={styles.form}>
-<input id="company-trap" name="company" defaultValue="" style={{ display: "none" }} />
+                {/* Honeypot (anti-spam) */}
+                <input
+                  id="company-trap"
+                  name="company"
+                  defaultValue=""
+                  style={{ display: "none" }}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
 
                 <label style={styles.label}>
                   Name
@@ -160,12 +167,14 @@ export default function Page() {
                   {status === "sending" ? "Sending..." : "Get recommendations"}
                 </button>
 
-                {status === "sent" && <p style={styles.success}>Thanks — we’ve received your details.</p>}
+                {status === "sent" && (
+                  <p style={styles.success}>Thanks — we’ve received your details.</p>
+                )}
                 {status === "error" && <p style={styles.error}>Error: {error}</p>}
 
                 <p style={styles.disclaimer}>
-                  By submitting, you agree we can contact you about your request. No spam — just your
-                  shortlist and next steps.
+                  By submitting, you agree we can contact you about your request.
+                  No spam — just your shortlist and next steps.
                 </p>
               </form>
             </div>
@@ -182,11 +191,7 @@ export default function Page() {
           </p>
 
           <div style={styles.tiers}>
-            <Tier
-              name="Free"
-              price="R0"
-              bullets={["Guided intake", "Shortlist starter", "General advice"]}
-            />
+            <Tier name="Free" price="R0" bullets={["Guided intake", "Shortlist starter", "General advice"]} />
             <Tier
               name="Bronze"
               price="From R499"
@@ -213,9 +218,21 @@ export default function Page() {
           <h2 style={styles.h2}>How it works</h2>
 
           <div style={styles.steps}>
-            <Step n="1" title="Tell us what matters" desc="Budget, lifestyle, commute, brand preferences, and non-negotiables." />
-            <Step n="2" title="We shortlist the best fits" desc="A clean set of options with clear pros/cons and “watch-outs”." />
-            <Step n="3" title="You get a simple plan" desc="Test drives, checks, negotiation pointers, and next steps." />
+            <Step
+              n="1"
+              title="Tell us what matters"
+              desc="Budget, lifestyle, commute, brand preferences, and non-negotiables."
+            />
+            <Step
+              n="2"
+              title="We shortlist the best fits"
+              desc="A clean set of options with clear pros/cons and “watch-outs”."
+            />
+            <Step
+              n="3"
+              title="You get a simple plan"
+              desc="Test drives, checks, negotiation pointers, and next steps."
+            />
           </div>
 
           <div style={styles.callout}>
@@ -306,16 +323,8 @@ function Step({ n, title, desc }: { n: string; title: string; desc: string }) {
 
 /** Styles (no Tailwind needed) */
 const styles: Record<string, React.CSSProperties> = {
-  page: {
-    minHeight: "100vh",
-    background: "#05070b",
-    color: "rgba(255,255,255,0.92)",
-  },
-  container: {
-    maxWidth: 1100,
-    margin: "0 auto",
-    padding: "0 20px",
-  },
+  page: { minHeight: "100vh", background: "#05070b", color: "rgba(255,255,255,0.92)" },
+  container: { maxWidth: 1100, margin: "0 auto", padding: "0 20px" },
 
   header: {
     position: "sticky",
@@ -325,31 +334,20 @@ const styles: Record<string, React.CSSProperties> = {
     background: "rgba(5,7,11,0.72)",
     borderBottom: "1px solid rgba(255,255,255,0.08)",
   },
-  headerRow: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 16,
-    padding: "14px 0",
-  },
+  headerRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "14px 0" },
   brand: { display: "flex", alignItems: "center", gap: 12 },
   brandMark: {
     width: 34,
     height: 34,
     borderRadius: 12,
-    background:
-      "linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.02))",
+    background: "linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.02))",
     border: "1px solid rgba(255,255,255,0.12)",
     boxShadow: "0 0 0 1px rgba(255,255,255,0.03) inset",
   },
   brandName: { fontWeight: 700, letterSpacing: 0.3 },
   brandTag: { fontSize: 12, opacity: 0.7, marginTop: 2 },
   nav: { display: "flex", gap: 14, alignItems: "center" },
-  navLink: {
-    fontSize: 13,
-    color: "rgba(255,255,255,0.75)",
-    textDecoration: "none",
-  },
+  navLink: { fontSize: 13, color: "rgba(255,255,255,0.75)", textDecoration: "none" },
 
   hero: { position: "relative", padding: "56px 0 36px" },
   heroGlow: {
@@ -360,13 +358,7 @@ const styles: Record<string, React.CSSProperties> = {
     background:
       "radial-gradient(700px circle at 15% 20%, rgba(37,99,235,0.38), transparent 55%), radial-gradient(800px circle at 80% 25%, rgba(148,163,184,0.22), transparent 55%), radial-gradient(800px circle at 40% 90%, rgba(255,255,255,0.10), transparent 55%)",
   },
-  heroGrid: {
-    position: "relative",
-    display: "grid",
-    gap: 22,
-    gridTemplateColumns: "1.2fr 0.9fr",
-    alignItems: "start",
-  },
+  heroGrid: { position: "relative", display: "grid", gap: 22, gridTemplateColumns: "1.2fr 0.9fr", alignItems: "start" },
 
   pill: {
     display: "inline-flex",
@@ -379,19 +371,8 @@ const styles: Record<string, React.CSSProperties> = {
     background: "rgba(255,255,255,0.06)",
     color: "rgba(255,255,255,0.78)",
   },
-  h1: {
-    margin: "14px 0 10px",
-    fontSize: 44,
-    lineHeight: 1.12,
-    letterSpacing: -0.6,
-  },
-  lede: {
-    margin: 0,
-    fontSize: 16,
-    lineHeight: 1.6,
-    color: "rgba(255,255,255,0.74)",
-    maxWidth: 620,
-  },
+  h1: { margin: "14px 0 10px", fontSize: 44, lineHeight: 1.12, letterSpacing: -0.6 },
+  lede: { margin: 0, fontSize: 16, lineHeight: 1.6, color: "rgba(255,255,255,0.74)", maxWidth: 620 },
   heroCtas: { display: "flex", gap: 10, marginTop: 18, flexWrap: "wrap" },
 
   primaryBtn: {
@@ -415,18 +396,8 @@ const styles: Record<string, React.CSSProperties> = {
     border: "1px solid rgba(255,255,255,0.10)",
   },
 
-  statsRow: {
-    marginTop: 22,
-    display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    gap: 10,
-  },
-  stat: {
-    borderRadius: 16,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.04)",
-    padding: 14,
-  },
+  statsRow: { marginTop: 22, display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10 },
+  stat: { borderRadius: 16, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.04)", padding: 14 },
   statTitle: { fontWeight: 700, fontSize: 14 },
   statDesc: { marginTop: 4, fontSize: 12.5, color: "rgba(255,255,255,0.70)", lineHeight: 1.45 },
 
@@ -487,21 +458,17 @@ const styles: Record<string, React.CSSProperties> = {
   disclaimer: { margin: "6px 0 0", fontSize: 12, color: "rgba(255,255,255,0.55)", lineHeight: 1.45 },
 
   section: { padding: "44px 0" },
-  sectionAlt: { padding: "44px 0", borderTop: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)" },
+  sectionAlt: {
+    padding: "44px 0",
+    borderTop: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(255,255,255,0.02)",
+  },
   h2: { margin: 0, fontSize: 26, letterSpacing: -0.3 },
   sectionLead: { marginTop: 10, color: "rgba(255,255,255,0.70)", maxWidth: 720, lineHeight: 1.6 },
 
   tiers: { marginTop: 18, display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 },
-  tier: {
-    borderRadius: 18,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.04)",
-    padding: 14,
-  },
-  tierHighlight: {
-    border: "1px solid rgba(37,99,235,0.35)",
-    background: "rgba(37,99,235,0.10)",
-  },
+  tier: { borderRadius: 18, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.04)", padding: 14 },
+  tierHighlight: { border: "1px solid rgba(37,99,235,0.35)", background: "rgba(37,99,235,0.10)" },
   tierTop: { display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline" },
   tierName: { fontWeight: 800 },
   tierPrice: { fontSize: 12.5, color: "rgba(255,255,255,0.70)" },
@@ -577,10 +544,3 @@ const styles: Record<string, React.CSSProperties> = {
   footerLinks: { display: "flex", gap: 12, alignItems: "center" },
   footerLink: { fontSize: 12.5, color: "rgba(255,255,255,0.70)", textDecoration: "none" },
 };
-
-/**
- * Responsive note:
- * This uses CSS grid with fixed columns; on small screens it may feel tight.
- * If you want it to stack nicely on mobile, tell me and I’ll add a tiny
- * “mobile breakpoint” using a simple CSS file or inline <style> tag.
- */
