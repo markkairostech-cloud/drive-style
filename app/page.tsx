@@ -1,6 +1,6 @@
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#020617] to-[#071133] text-white">
+    <main className="min-h-screen flex items-center bg-gradient-to-b from-[#020617] to-[#071133] text-white">
       <section className="max-w-5xl mx-auto px-6 py-24">
         <h1 className="text-5xl font-semibold tracking-tight mb-6">
           Drive Style
