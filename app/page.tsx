@@ -1,11 +1,13 @@
 "use client";
 
+import RouteTestButton from "./RouteTestButton";
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Page() {
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
-    "idle"
-  );
+  const router = useRouter();
+
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [error, setError] = useState<string>("");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -27,6 +29,7 @@ export default function Page() {
     };
 
     try {
+      // 1) Save lead (Google Sheets)
       const res = await fetch("/api/lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -41,8 +44,36 @@ export default function Page() {
         return;
       }
 
+      // 2) Generate advice
+      const advicePayload = {
+        passengers: String(data.get("passengers") || "couple"),
+        distance: String(data.get("distance") || "urban_daily"),
+        budget: String(data.get("budgetAttitude") || "balanced"),
+        ownership: String(data.get("ownership") || "neutral"),
+        risk: String(data.get("risk") || "certainty"),
+        environment: String(data.get("environment") || "suburb"),
+        preference: String(data.get("preference") || "suv"),
+        drivingStyle: String(data.get("drivingStyle") || "relaxed"),
+      };
+
+      const adviceRes = await fetch("/api/advice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(advicePayload),
+      });
+
+      const adviceJson = await adviceRes.json().catch(() => ({}));
+
+      if (!adviceRes.ok || !adviceJson.ok) {
+        setStatus("error");
+        setError(adviceJson?.error || "Lead saved, but advice generation failed.");
+        return;
+      }
+
+      // 3) Store + redirect
+      sessionStorage.setItem("driveStyleAdvice", JSON.stringify(adviceJson.advice));
       setStatus("sent");
-      form.reset();
+      router.push("/results");
     } catch (err: any) {
       setStatus("error");
       setError(err?.message || "Network error");
@@ -61,9 +92,7 @@ export default function Page() {
               <div style={styles.brandMark} aria-hidden />
               <div>
                 <div style={styles.brandName}>Drive Style</div>
-                <div style={styles.brandTag}>
-                  Vehicle concierge advice • South Africa
-                </div>
+                <div style={styles.brandTag}>Vehicle concierge advice • South Africa</div>
               </div>
             </div>
 
@@ -75,7 +104,7 @@ export default function Page() {
                 How it works
               </a>
               <a href="#lead" style={styles.navLink}>
-                Get recommendations
+                Start my vehicle brief
               </a>
             </nav>
           </div>
@@ -89,44 +118,47 @@ export default function Page() {
           <div style={styles.heroGrid}>
             <div>
               <div style={styles.pill}>Premium guidance • Friendly advisor</div>
-              <h1 style={styles.h1}>
-                Buy the right car with confidence — without the dealer headache.
-              </h1>
+              <h1 style={styles.h1}>Buy the right car with confidence — without the dealer headache.</h1>
               <p style={styles.lede}>
-                Tell us your budget, needs, and preferences. We’ll send a
-                shortlist that fits your lifestyle, with clear pros/cons and
-                next steps — tuned for South Africa.
+                Tell me your budget, needs, and preferences. I’ll shortlist options that fit your lifestyle, with clear
+                pros, cons, and next steps — tuned for South Africa.
               </p>
 
               <div style={styles.heroCtas}>
-                <a href="#lead" style={styles.primaryBtn}>
-                  Get my shortlist
-                </a>
+                <div style={styles.heroPrimaryCta}>
+                  <a href="#lead" style={styles.primaryBtn}>
+                    Start my vehicle brief
+                  </a>
+                  <div style={styles.ctaNote}>
+                    Takes 60 seconds • No calls unless you request one • South Africa-specific advice
+                  </div>
+                </div>
+
                 <a href="#how" style={styles.secondaryBtn}>
                   How it works
                 </a>
               </div>
 
               <div style={styles.statsRow}>
-                <Stat title="Shortlist" desc="2–5 options that match you" />
-                <Stat title="Deal support" desc="Pricing & negotiation pointers" />
-                <Stat title="Simple plan" desc="Test drives, checks, and next steps" />
+                <Stat title="Cars that suit your life" desc="Not just popular choices — real fit" />
+                <Stat title="Avoid bad deals" desc="Know what to pay and what to skip" />
+                <Stat title="Clear next steps" desc="Exactly how to buy safely" />
               </div>
             </div>
 
             {/* Right-side card */}
             <div style={styles.card}>
               <div style={styles.cardTitleRow}>
-                <div style={styles.cardTitle}>Get recommendations</div>
-                <div style={styles.cardBadge}>Free</div>
+                <div style={styles.cardTitle}>Start my vehicle brief</div>
+                <div style={styles.cardBadge}>No Cost</div>
               </div>
-              <p style={styles.cardSub}>
-                Fill this in and we’ll reply with tailored vehicle options and
-                guidance.
-              </p>
+              <p style={styles.cardSub}>Fill this in and I’ll reply with tailored vehicle options and guidance.</p>
 
-              <form id="lead" onSubmit={onSubmit} style={styles.form}>
-                {/* Honeypot (anti-spam) */}
+              <RouteTestButton />
+
+              {/* IMPORTANT: scroll target */}
+              <form id="lead" onSubmit={onSubmit} style={{ ...styles.form, scrollMarginTop: 220 }}>
+                {/* Honeypot field - hidden */}
                 <input
                   id="company-trap"
                   name="company"
@@ -136,19 +168,24 @@ export default function Page() {
                   autoComplete="off"
                 />
 
+                <div style={styles.formHeader}>
+                  <div style={styles.formH3}>What does your next car need to do for you?</div>
+                  <div style={styles.formSub}>I’ll shortlist vehicles and explain why they suit your usage and budget.</div>
+                </div>
+
                 <label style={styles.label}>
-                  Name
+                  Your name
                   <input name="name" required style={styles.input} />
                 </label>
 
                 <label style={styles.label}>
-                  Email
+                  Best email for your shortlist
                   <input name="email" type="email" required style={styles.input} />
                 </label>
 
                 <div style={styles.twoCol}>
                   <label style={styles.label}>
-                    Phone (optional)
+                    Phone (only if you want WhatsApp guidance)
                     <input name="phone" style={styles.input} />
                   </label>
 
@@ -163,18 +200,95 @@ export default function Page() {
                   <textarea name="message" rows={4} style={styles.textarea} />
                 </label>
 
-                <button type="submit" disabled={status === "sending"} style={styles.submitBtn}>
-                  {status === "sending" ? "Sending..." : "Get recommendations"}
+                {/* TEMP: Quick questions so we can generate advice now */}
+                <div style={styles.formHeader}>
+                  <div style={styles.formH3}>Quick questions (so I can generate your insight)</div>
+                  <div style={styles.formSub}>We’ll replace these with your conversational quiz later.</div>
+                </div>
+
+                <label style={styles.label}>
+                  Passengers
+                  <select name="passengers" defaultValue="couple" style={styles.input as any} required>
+                    <option value="alone">Mostly alone</option>
+                    <option value="couple">Couple</option>
+                    <option value="family">Family (3–4)</option>
+                    <option value="large_family">Large family (5+)</option>
+                  </select>
+                </label>
+
+                <label style={styles.label}>
+                  Distance pattern
+                  <select name="distance" defaultValue="urban_daily" style={styles.input as any} required>
+                    <option value="very_short">Very short (&lt; 5 km)</option>
+                    <option value="urban_daily">Urban daily (traffic)</option>
+                    <option value="mixed">Mixed use</option>
+                    <option value="long_distance">Long distance / highway</option>
+                  </select>
+                </label>
+
+                <label style={styles.label}>
+                  Budget attitude
+                  <select name="budgetAttitude" defaultValue="balanced" style={styles.input as any} required>
+                    <option value="tight">Tight</option>
+                    <option value="balanced">Balanced</option>
+                    <option value="flexible">Flexible</option>
+                  </select>
+                </label>
+
+                <label style={styles.label}>
+                  Ownership personality
+                  <select name="ownership" defaultValue="neutral" style={styles.input as any} required>
+                    <option value="loves_cars">I love cars</option>
+                    <option value="neutral">Neutral</option>
+                    <option value="appliance">Just transport</option>
+                  </select>
+                </label>
+
+                <label style={styles.label}>
+                  Risk tolerance
+                  <select name="risk" defaultValue="certainty" style={styles.input as any} required>
+                    <option value="certainty">I want certainty</option>
+                    <option value="risk_ok">I’m ok with some risk</option>
+                  </select>
+                </label>
+
+                <label style={styles.label}>
+                  Environment
+                  <select name="environment" defaultValue="suburb" style={styles.input as any} required>
+                    <option value="city">City</option>
+                    <option value="suburb">Suburb</option>
+                    <option value="rough">Rural / rough roads</option>
+                  </select>
+                </label>
+
+                <label style={styles.label}>
+                  Preference
+                  <select name="preference" defaultValue="suv" style={styles.input as any} required>
+                    <option value="suv">I like SUVs</option>
+                    <option value="sedan">I like sedans</option>
+                    <option value="none">No strong preference</option>
+                  </select>
+                </label>
+
+                <label style={styles.label}>
+                  Driving style
+                  <select name="drivingStyle" defaultValue="relaxed" style={styles.input as any} required>
+                    <option value="relaxed">Relaxed</option>
+                    <option value="balanced">Balanced</option>
+                    <option value="enthusiastic">Enthusiastic</option>
+                    <option value="heavy_duty">Heavy duty / towing</option>
+                  </select>
+                </label>
+
+                <button type="submit" disabled={status !== "idle"} style={styles.submitBtn}>
+                  {status === "sending" ? "Sending..." : status === "sent" ? "Submitted" : "Get my shortlist"}
                 </button>
 
-                {status === "sent" && (
-                  <p style={styles.success}>Thanks — we’ve received your details.</p>
-                )}
                 {status === "error" && <p style={styles.error}>Error: {error}</p>}
 
                 <p style={styles.disclaimer}>
-                  By submitting, you agree we can contact you about your request.
-                  No spam — just your shortlist and next steps.
+                  By submitting, you agree we can contact you about your request. No spam — just your shortlist and next
+                  steps.
                 </p>
               </form>
             </div>
@@ -185,21 +299,15 @@ export default function Page() {
       {/* Services */}
       <section id="services" style={styles.section}>
         <div style={styles.container}>
-          <h2 style={styles.h2}>Services</h2>
-          <p style={styles.sectionLead}>
-            Choose how much help you want — from quick guidance to end-to-end concierge support.
-          </p>
+          <h2 style={styles.h2}>How can I help</h2>
+          <p style={styles.sectionLead}>Choose how much help you want — from quick guidance to end-to-end concierge support.</p>
 
           <div style={styles.tiers}>
-            <Tier name="Free" price="R0" bullets={["Guided intake", "Shortlist starter", "General advice"]} />
-            <Tier
-              name="Bronze"
-              price="From R499"
-              bullets={["Shortlist + reasoning", "Budget fit check", "WhatsApp Q&A (limited)"]}
-            />
+            <Tier name="No Cost" price="R0" bullets={["Guided intake", "Shortlist starter", "General advice"]} />
+            <Tier name="Bronze" price="From R500" bullets={["Shortlist + reasoning", "Budget fit check", "WhatsApp Q&A (limited)"]} />
             <Tier
               name="Platinum"
-              price="From R1,499"
+              price="From R1,500"
               bullets={["Deeper options + trade-offs", "Dealer messaging templates", "Finance guidance"]}
               highlight
             />
@@ -220,25 +328,17 @@ export default function Page() {
           <div style={styles.steps}>
             <Step
               n="1"
-              title="Tell us what matters"
-              desc="Budget, lifestyle, commute, brand preferences, and non-negotiables."
+              title="What does your next car need to do for you?"
+              desc="I’ll shortlist vehicles and explain why they suit your budget, lifestyle, commute, brand preferences, and non-negotiables."
             />
-            <Step
-              n="2"
-              title="We shortlist the best fits"
-              desc="A clean set of options with clear pros/cons and “watch-outs”."
-            />
-            <Step
-              n="3"
-              title="You get a simple plan"
-              desc="Test drives, checks, negotiation pointers, and next steps."
-            />
+            <Step n="2" title="We shortlist the best fits" desc="A clean set of options with clear pros/cons and “watch-outs”." />
+            <Step n="3" title="You get a simple plan" desc="Test drives, checks, negotiation pointers, and next steps." />
           </div>
 
           <div style={styles.callout}>
             <div style={styles.calloutTitle}>Want faster help?</div>
             <div style={styles.calloutText}>
-              Submit the form above and we’ll respond with recommendations. You can also add your phone number for WhatsApp follow-up.
+              Submit the form above and I’ll respond with recommendations. You can also add your phone number for WhatsApp follow-up.
             </div>
             <a href="#lead" style={styles.secondaryBtn}>
               Jump to the form
@@ -256,9 +356,15 @@ export default function Page() {
               <div style={styles.footerSmall}>© {year} Drive Style. All rights reserved.</div>
             </div>
             <div style={styles.footerLinks}>
-              <a href="#services" style={styles.footerLink}>Services</a>
-              <a href="#how" style={styles.footerLink}>How it works</a>
-              <a href="#lead" style={styles.footerLink}>Get recommendations</a>
+              <a href="#services" style={styles.footerLink}>
+                Services
+              </a>
+              <a href="#how" style={styles.footerLink}>
+                How it works
+              </a>
+              <a href="#lead" style={styles.footerLink}>
+                Start my vehicle brief
+              </a>
             </div>
           </div>
         </div>
@@ -323,7 +429,7 @@ function Step({ n, title, desc }: { n: string; title: string; desc: string }) {
 
 /** Styles (no Tailwind needed) */
 const styles: Record<string, React.CSSProperties> = {
-  page: { minHeight: "100vh", background: "#05070b", color: "rgba(255,255,255,0.92)" },
+  page: { minHeight: "100vh", background: "#0B1C2D", color: "rgba(255,255,255,0.92)" },
   container: { maxWidth: 1100, margin: "0 auto", padding: "0 20px" },
 
   header: {
@@ -373,7 +479,10 @@ const styles: Record<string, React.CSSProperties> = {
   },
   h1: { margin: "14px 0 10px", fontSize: 44, lineHeight: 1.12, letterSpacing: -0.6 },
   lede: { margin: 0, fontSize: 16, lineHeight: 1.6, color: "rgba(255,255,255,0.74)", maxWidth: 620 },
-  heroCtas: { display: "flex", gap: 10, marginTop: 18, flexWrap: "wrap" },
+
+  heroCtas: { display: "flex", gap: 10, marginTop: 18, flexWrap: "wrap", alignItems: "flex-start" },
+  heroPrimaryCta: { display: "grid", gap: 8 },
+  ctaNote: { fontSize: 12.5, color: "rgba(255,255,255,0.65)", lineHeight: 1.35 },
 
   primaryBtn: {
     display: "inline-block",
@@ -401,68 +510,29 @@ const styles: Record<string, React.CSSProperties> = {
   statTitle: { fontWeight: 700, fontSize: 14 },
   statDesc: { marginTop: 4, fontSize: 12.5, color: "rgba(255,255,255,0.70)", lineHeight: 1.45 },
 
-  card: {
-    borderRadius: 22,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(255,255,255,0.05)",
-    padding: 18,
-    boxShadow: "0 0 0 1px rgba(255,255,255,0.03) inset",
-  },
+  card: { borderRadius: 22, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.05)", padding: 18, boxShadow: "0 0 0 1px rgba(255,255,255,0.03) inset" },
   cardTitleRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 },
   cardTitle: { fontWeight: 800, letterSpacing: -0.2 },
-  cardBadge: {
-    fontSize: 12,
-    padding: "6px 10px",
-    borderRadius: 999,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(37,99,235,0.14)",
-    color: "rgba(255,255,255,0.85)",
-  },
+  cardBadge: { fontSize: 12, padding: "6px 10px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(37,99,235,0.14)", color: "rgba(255,255,255,0.85)" },
   cardSub: { margin: "10px 0 0", fontSize: 13.5, color: "rgba(255,255,255,0.70)", lineHeight: 1.5 },
 
   form: { marginTop: 14, display: "grid", gap: 12 },
+  formHeader: { display: "grid", gap: 6, marginTop: 4, marginBottom: 6 },
+  formH3: { fontWeight: 900, letterSpacing: -0.2, fontSize: 16.5 },
+  formSub: { fontSize: 13, color: "rgba(255,255,255,0.70)", lineHeight: 1.45 },
+
   label: { display: "grid", gap: 6, fontSize: 12.5, color: "rgba(255,255,255,0.80)" },
-  input: {
-    width: "100%",
-    padding: "10px 12px",
-    borderRadius: 14,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(0,0,0,0.25)",
-    color: "rgba(255,255,255,0.92)",
-    outline: "none",
-  },
-  textarea: {
-    width: "100%",
-    padding: "10px 12px",
-    borderRadius: 14,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(0,0,0,0.25)",
-    color: "rgba(255,255,255,0.92)",
-    outline: "none",
-    resize: "vertical",
-  },
+  input: { width: "100%", padding: "10px 12px", borderRadius: 14, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(0,0,0,0.25)", color: "rgba(255,255,255,0.92)", outline: "none" },
+  textarea: { width: "100%", padding: "10px 12px", borderRadius: 14, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(0,0,0,0.25)", color: "rgba(255,255,255,0.92)", outline: "none", resize: "vertical" },
   twoCol: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 },
 
-  submitBtn: {
-    padding: "12px 14px",
-    borderRadius: 14,
-    border: "1px solid rgba(255,255,255,0.18)",
-    background: "rgba(255,255,255,0.92)",
-    color: "#06080c",
-    cursor: "pointer",
-    fontWeight: 800,
-  },
+  submitBtn: { padding: "12px 14px", borderRadius: 14, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.92)", color: "#06080c", cursor: "pointer", fontWeight: 800 },
 
-  success: { margin: "6px 0 0", color: "rgba(134,239,172,0.95)", fontSize: 13 },
   error: { margin: "6px 0 0", color: "rgba(252,165,165,0.95)", fontSize: 13 },
   disclaimer: { margin: "6px 0 0", fontSize: 12, color: "rgba(255,255,255,0.55)", lineHeight: 1.45 },
 
   section: { padding: "44px 0" },
-  sectionAlt: {
-    padding: "44px 0",
-    borderTop: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(255,255,255,0.02)",
-  },
+  sectionAlt: { padding: "44px 0", borderTop: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)" },
   h2: { margin: 0, fontSize: 26, letterSpacing: -0.3 },
   sectionLead: { marginTop: 10, color: "rgba(255,255,255,0.70)", maxWidth: 720, lineHeight: 1.6 },
 
@@ -476,64 +546,16 @@ const styles: Record<string, React.CSSProperties> = {
   tierLi: { display: "flex", gap: 10, alignItems: "flex-start", color: "rgba(255,255,255,0.74)", fontSize: 13, lineHeight: 1.4 },
   dot: { width: 8, height: 8, borderRadius: 999, background: "rgba(96,165,250,0.9)", marginTop: 5 },
 
-  primaryBtnSmall: {
-    display: "inline-block",
-    padding: "10px 12px",
-    borderRadius: 14,
-    background: "rgba(255,255,255,0.92)",
-    color: "#06080c",
-    textDecoration: "none",
-    fontWeight: 800,
-    border: "1px solid rgba(255,255,255,0.18)",
-    textAlign: "center",
-  },
-  secondaryBtnSmall: {
-    display: "inline-block",
-    padding: "10px 12px",
-    borderRadius: 14,
-    background: "rgba(255,255,255,0.06)",
-    color: "rgba(255,255,255,0.86)",
-    textDecoration: "none",
-    fontWeight: 700,
-    border: "1px solid rgba(255,255,255,0.10)",
-    textAlign: "center",
-  },
+  primaryBtnSmall: { display: "inline-block", padding: "10px 12px", borderRadius: 14, background: "rgba(255,255,255,0.92)", color: "#06080c", textDecoration: "none", fontWeight: 800, border: "1px solid rgba(255,255,255,0.18)", textAlign: "center" },
+  secondaryBtnSmall: { display: "inline-block", padding: "10px 12px", borderRadius: 14, background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.86)", textDecoration: "none", fontWeight: 700, border: "1px solid rgba(255,255,255,0.10)", textAlign: "center" },
 
   steps: { marginTop: 18, display: "grid", gap: 12, gridTemplateColumns: "repeat(3, minmax(0, 1fr))" },
-  step: {
-    borderRadius: 18,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.04)",
-    padding: 14,
-    display: "flex",
-    gap: 12,
-    alignItems: "flex-start",
-  },
-  stepN: {
-    width: 32,
-    height: 32,
-    borderRadius: 12,
-    display: "grid",
-    placeItems: "center",
-    background: "rgba(37,99,235,0.18)",
-    border: "1px solid rgba(37,99,235,0.35)",
-    fontWeight: 900,
-  },
+  step: { borderRadius: 18, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.04)", padding: 14, display: "flex", gap: 12, alignItems: "flex-start" },
+  stepN: { width: 32, height: 32, borderRadius: 12, display: "grid", placeItems: "center", background: "rgba(37,99,235,0.18)", border: "1px solid rgba(37,99,235,0.35)", fontWeight: 900 },
   stepTitle: { fontWeight: 800 },
   stepDesc: { marginTop: 6, fontSize: 13, color: "rgba(255,255,255,0.70)", lineHeight: 1.5 },
 
-  callout: {
-    marginTop: 18,
-    borderRadius: 18,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.04)",
-    padding: 16,
-    display: "flex",
-    gap: 14,
-    alignItems: "center",
-    justifyContent: "space-between",
-    flexWrap: "wrap",
-  },
+  callout: { marginTop: 18, borderRadius: 18, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.04)", padding: 16, display: "flex", gap: 14, alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" },
   calloutTitle: { fontWeight: 900 },
   calloutText: { color: "rgba(255,255,255,0.70)", maxWidth: 680, lineHeight: 1.5 },
 
