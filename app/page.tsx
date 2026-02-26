@@ -54,6 +54,7 @@ export default function Page() {
         environment: String(data.get("environment") || "suburb"),
         preference: String(data.get("preference") || "suv"),
         drivingStyle: String(data.get("drivingStyle") || "relaxed"),
+         budgetAmount: String(data.get("budget") || ""),
       };
 
       const adviceRes = await fetch("/api/advice", {
@@ -64,16 +65,16 @@ export default function Page() {
 
       const adviceJson = await adviceRes.json().catch(() => ({}));
 
-      if (!adviceRes.ok || !adviceJson.ok) {
-        setStatus("error");
-        setError(adviceJson?.error || "Lead saved, but advice generation failed.");
-        return;
-      }
+if (!adviceRes.ok) {
+  setStatus("error");
+  setError(adviceJson?.error || "Lead saved, but advice generation failed.");
+  return;
+}
 
-      // 3) Store + redirect
-      sessionStorage.setItem("driveStyleAdvice", JSON.stringify(adviceJson.advice));
-      setStatus("sent");
-      router.push("/results");
+// 3) Store + redirect
+sessionStorage.setItem("driveStyleAdvice", JSON.stringify(adviceJson));
+setStatus("sent");
+router.push("/results");
     } catch (err: any) {
       setStatus("error");
       setError(err?.message || "Network error");
