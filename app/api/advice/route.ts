@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
-import { generateAdvice, BriefInput } from "@/lib/driveStyleEngine";
+import { getVehicleCatalog } from "@/lib/vehicleCatalog";
+import { generateAdvice } from "@/lib/driveStyleEngine";
 
-export async function POST(req: Request) {
-  const input = (await req.json()) as BriefInput;
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
 
-  if (!input?.passengers || !input?.distance || !input?.environment) {
-    return NextResponse.json({ ok: false, error: "Missing fields" }, { status: 400 });
+    const catalog = getVehicleCatalog();
+   
+    // For now we just generate advice from the brief.
+    // Next step will be budget filtering + passing candidates into the engine.
+    const advice = generateAdvice(body);
+
+    return NextResponse.json(advice);
+  } catch (error) {
+    console.error("Advice generation failed:", error);
+    return NextResponse.json({ error: "Advice generation failed." }, { status: 500 });
   }
-
-  const advice = generateAdvice(input);
-  return NextResponse.json({ ok: true, advice });
 }
