@@ -14,6 +14,13 @@ type Advice = {
 type SaveStatus = "idle" | "sending" | "sent" | "error";
 type LoadState = "loading" | "ready" | "empty";
 
+const STORAGE = {
+  advice: "driveStyleAdvice",
+  email: "driveStyleEmail",
+  name: "driveStyleName",
+  phone: "driveStylePhone",
+} as const;
+
 export default function ResultsPage() {
   const [advice, setAdvice] = useState<Advice | null>(null);
   const [loadState, setLoadState] = useState<LoadState>("loading");
@@ -32,6 +39,10 @@ export default function ResultsPage() {
   const [saveEmail, setSaveEmail] = useState("");
   const [savePhone, setSavePhone] = useState("");
 
+  // "Receipt" row state
+  const [storedEmail, setStoredEmail] = useState<string>("");
+  const [storedName, setStoredName] = useState<string>("");
+
   // Sticky CTA behaviour
   const [showStickyCta, setShowStickyCta] = useState(false);
   const saveRef = useRef<HTMLDivElement | null>(null);
@@ -43,9 +54,25 @@ export default function ResultsPage() {
   // ---- Basic tracking (console for now; swap for analytics later) ----
   function track(event: string, props?: Record<string, any>) {
     try {
-      // Keep it lightweight for launch; replace with your analytics later.
       // eslint-disable-next-line no-console
       console.log("[DriveStyle]", event, props || {});
+    } catch {
+      // ignore
+    }
+  }
+
+  function readLocalString(key: string) {
+    try {
+      return String(localStorage.getItem(key) || "").trim();
+    } catch {
+      return "";
+    }
+  }
+
+  function writeLocalString(key: string, value: string) {
+    try {
+      if (!value) return;
+      localStorage.setItem(key, value);
     } catch {
       // ignore
     }
@@ -54,8 +81,8 @@ export default function ResultsPage() {
   // Persist results (session + local fallback)
   useEffect(() => {
     try {
-      let raw = sessionStorage.getItem("driveStyleAdvice");
-      if (!raw) raw = localStorage.getItem("driveStyleAdvice");
+      let raw = sessionStorage.getItem(STORAGE.advice);
+      if (!raw) raw = localStorage.getItem(STORAGE.advice);
 
       if (!raw) {
         setLoadState("empty");
@@ -67,13 +94,27 @@ export default function ResultsPage() {
       setLoadState("ready");
 
       // keep localStorage synced for refresh persistence
-      localStorage.setItem("driveStyleAdvice", raw);
+      localStorage.setItem(STORAGE.advice, raw);
+
+      // Pull any saved contact info (for “receipt” + prefill)
+      const existingEmail = readLocalString(STORAGE.email);
+      const existingName = readLocalString(STORAGE.name);
+      const existingPhone = readLocalString(STORAGE.phone);
+
+      if (existingEmail) setStoredEmail(existingEmail);
+      if (existingName) setStoredName(existingName);
+
+      // Prefill the save form if we already have contact info
+      if (existingEmail) setSaveEmail(existingEmail);
+      if (existingName) setSaveName(existingName);
+      if (existingPhone) setSavePhone(existingPhone);
 
       track("results_loaded", {
         insights: parsed?.insights?.length ?? 0,
         models: parsed?.models?.length ?? 0,
         hasVerdict: !!parsed?.verdict,
-        source: sessionStorage.getItem("driveStyleAdvice") ? "session" : "local",
+        source: sessionStorage.getItem(STORAGE.advice) ? "session" : "local",
+        hasStoredEmail: !!existingEmail,
       });
     } catch {
       setLoadState("empty");
@@ -122,10 +163,7 @@ export default function ResultsPage() {
       .map((m, i) => `${i + 1}. ${m.name}\n   ${m.why}`)
       .join("\n\n");
 
-    const insights = (advice.insights || [])
-      .map((i) => `• ${i.title}: ${i.text}`)
-      .join("\n");
-
+    const insights = (advice.insights || []).map((i) => `• ${i.title}: ${i.text}`).join("\n");
     const verdictLine = advice.verdict ? `\n\nDrive Style Verdict:\n${advice.verdict}` : "";
 
     return `Drive Style Shortlist
@@ -170,9 +208,7 @@ ${advice.closing}
       });
 
       window.setTimeout(() => {
-        const first = el.querySelector<HTMLInputElement>(
-          'input[type="email"], input[name="email"], input'
-        );
+        const first = el.querySelector<HTMLInputElement>('input[type="email"], input[name="email"], input');
         first?.focus?.();
       }, prefersReducedMotion ? 0 : 250);
     } catch {
@@ -183,9 +219,9 @@ ${advice.closing}
   function resetSaveForm() {
     setSaveStatus("idle");
     setSaveError("");
-    setSaveName("");
-    setSaveEmail("");
-    setSavePhone("");
+    setSaveName(storedName || "");
+    setSaveEmail(storedEmail || "");
+    setSavePhone(readLocalString(STORAGE.phone) || "");
     track("results_save_reset");
   }
 
@@ -201,7 +237,7 @@ ${advice.closing}
     setSaveStatus("sending");
     setSaveError("");
 
-    track("results_save_submit", { hasPhone: !!savePhone.trim() });
+    track("results_save_submit", { hasPhone: !!savePhone.trim(), prefilled: email === storedEmail });
 
     const payload = {
       name: saveName.trim(),
@@ -229,6 +265,14 @@ ${advice.closing}
         return;
       }
 
+      // Store contact info locally so we can show a “receipt” and prefill later
+      writeLocalString(STORAGE.email, email);
+      writeLocalString(STORAGE.name, saveName.trim());
+      writeLocalString(STORAGE.phone, savePhone.trim());
+
+      setStoredEmail(email);
+      setStoredName(saveName.trim());
+
       setSaveStatus("sent");
       track("results_save_success");
     } catch (err: any) {
@@ -240,8 +284,8 @@ ${advice.closing}
 
   function clearStoredAdvice() {
     try {
-      sessionStorage.removeItem("driveStyleAdvice");
-      localStorage.removeItem("driveStyleAdvice");
+      sessionStorage.removeItem(STORAGE.advice);
+      localStorage.removeItem(STORAGE.advice);
     } catch {
       // ignore
     }
@@ -310,15 +354,12 @@ ${advice.closing}
               </Link>
             </div>
 
-            <div style={styles.helpNote}>
-              If this keeps happening, clear saved results and try again.
-            </div>
+            <div style={styles.helpNote}>If this keeps happening, clear saved results and try again.</div>
 
             <button
               type="button"
               onClick={() => {
                 clearStoredAdvice();
-                // send them to the form anchor
                 window.location.href = "/#lead";
               }}
               style={styles.ghostBtn}
@@ -332,6 +373,7 @@ ${advice.closing}
   }
 
   const saveDisabled = saveStatus === "sending" || saveStatus === "sent";
+  const showReceipt = loadState === "ready";
 
   return (
     <main style={styles.page}>
@@ -344,12 +386,7 @@ ${advice.closing}
           </div>
 
           <div style={styles.headerActions}>
-            <button
-              type="button"
-              onClick={() => copyToClipboard("header")}
-              style={styles.ghostBtn}
-              aria-label="Copy summary"
-            >
+            <button type="button" onClick={() => copyToClipboard("header")} style={styles.ghostBtn} aria-label="Copy summary">
               {copied ? "Copied" : "Copy"}
             </button>
             <Link href="/" style={styles.secondaryBtn} onClick={() => track("results_new_brief")}>
@@ -363,9 +400,7 @@ ${advice.closing}
           <div style={styles.topHeader}>
             <div>
               <h1 style={styles.h1}>Your shortlist is ready</h1>
-              <p style={styles.topSub}>
-                5 vehicles that match your budget and everyday needs — ranked by best fit.
-              </p>
+              <p style={styles.topSub}>5 vehicles that match your budget and everyday needs — ranked by best fit.</p>
             </div>
 
             <div style={styles.topActions}>
@@ -377,6 +412,32 @@ ${advice.closing}
               </Link>
             </div>
           </div>
+
+          {/* “Receipt” row (premium reassurance) */}
+          {showReceipt && (
+            <div style={styles.receiptRow} role="status" aria-live="polite">
+              <div style={styles.receiptLeft}>
+                <span style={styles.receiptPillOk}>Shortlist generated</span>
+                <span style={styles.receiptPillSoft}>Saved for this session</span>
+
+                {storedEmail ? (
+                  <span style={styles.receiptPillInfo} title={storedEmail}>
+                    Email on file: {maskEmail(storedEmail)}
+                  </span>
+                ) : (
+                  <button type="button" onClick={() => scrollToSave("hero")} style={styles.receiptLinkBtn}>
+                    Want this emailed to you?
+                  </button>
+                )}
+              </div>
+
+              <div style={styles.receiptRight}>
+                <button type="button" onClick={() => copyToClipboard("header")} style={styles.receiptGhostBtn}>
+                  {copied ? "Copied" : "Copy summary"}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Trust row */}
           <div style={styles.trustRow}>
@@ -443,9 +504,7 @@ ${advice.closing}
                 >
                   <div style={styles.modelName}>{m.name}</div>
 
-                  <div style={isExpanded || !shouldShowToggle ? styles.modelWhyExpanded : styles.modelWhyClamp}>
-                    {m.why}
-                  </div>
+                  <div style={isExpanded || !shouldShowToggle ? styles.modelWhyExpanded : styles.modelWhyClamp}>{m.why}</div>
 
                   {shouldShowToggle && (
                     <button
@@ -472,15 +531,15 @@ ${advice.closing}
           <div id="save" ref={(n) => (saveRef.current = n)} style={styles.saveBlock}>
             <div style={styles.saveTitle}>Email me this shortlist</div>
             <div style={styles.saveText}>
-              Get your shortlist in your inbox (and keep it for later). Optional: add your phone if you want WhatsApp
-              help.
+              Add an email so we can keep your shortlist on file for follow-up. Optional: add your phone if you want WhatsApp help.
             </div>
 
             {saveStatus === "sent" ? (
               <div style={styles.saveSuccess} role="status" aria-live="polite">
-                <div style={styles.saveSuccessTitle}>Sent ✅</div>
+                <div style={styles.saveSuccessTitle}>Saved ✅</div>
                 <div style={styles.saveSmall}>
-                  Check your inbox. If it doesn’t arrive, try again with the same email (or copy the summary).
+                  We’ve saved your shortlist request for{" "}
+                  <span style={styles.inlineCode}>{storedEmail ? maskEmail(storedEmail) : saveEmail}</span>.
                 </div>
 
                 <div style={styles.inlineActions}>
@@ -488,12 +547,12 @@ ${advice.closing}
                     {copied ? "Copied" : "Copy summary"}
                   </button>
                   <button type="button" onClick={resetSaveForm} style={styles.ghostBtn}>
-                    Send to a different email
+                    Use a different email
                   </button>
                 </div>
 
                 <div style={styles.saveSmall2}>
-                  Note: This logs your request to our internal list. Email sending is part of the launch rollout.
+                  Note: this logs your request to our internal list. Automated email sending is part of the launch rollout.
                 </div>
               </div>
             ) : (
@@ -503,7 +562,11 @@ ${advice.closing}
                     Name (optional)
                     <input
                       value={saveName}
-                      onChange={(e) => setSaveName(e.target.value)}
+                      onChange={(e) => {
+                        setSaveName(e.target.value);
+                        writeLocalString(STORAGE.name, e.target.value.trim());
+                        setStoredName(e.target.value.trim());
+                      }}
                       style={styles.fieldInput}
                       autoComplete="name"
                       disabled={saveDisabled}
@@ -514,7 +577,13 @@ ${advice.closing}
                     Email (required)
                     <input
                       value={saveEmail}
-                      onChange={(e) => setSaveEmail(e.target.value)}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setSaveEmail(v);
+                        // Store on change so “receipt” can show immediately after refresh, even before submit
+                        writeLocalString(STORAGE.email, v.trim().toLowerCase());
+                        setStoredEmail(v.trim().toLowerCase());
+                      }}
                       style={styles.fieldInput}
                       type="email"
                       required
@@ -527,7 +596,10 @@ ${advice.closing}
                     Phone (optional)
                     <input
                       value={savePhone}
-                      onChange={(e) => setSavePhone(e.target.value)}
+                      onChange={(e) => {
+                        setSavePhone(e.target.value);
+                        writeLocalString(STORAGE.phone, e.target.value.trim());
+                      }}
                       style={styles.fieldInput}
                       autoComplete="tel"
                       inputMode="tel"
@@ -545,7 +617,7 @@ ${advice.closing}
                       ...(saveStatus === "sending" ? styles.btnDisabled : null),
                     }}
                   >
-                    {saveStatus === "sending" ? "Sending..." : "Send to my email"}
+                    {saveStatus === "sending" ? "Saving..." : "Save my email"}
                   </button>
 
                   <button type="button" onClick={() => copyToClipboard("save")} style={styles.secondaryBtn}>
@@ -587,6 +659,21 @@ ${advice.closing}
       )}
     </main>
   );
+}
+
+/** Helpers */
+function maskEmail(email: string) {
+  const e = String(email || "").trim();
+  const at = e.indexOf("@");
+  if (at <= 1) return e;
+  const local = e.slice(0, at);
+  const domain = e.slice(at + 1);
+  const keep = Math.min(2, Math.max(1, local.length));
+  const maskedLocal = local.slice(0, keep) + "•••";
+  const dot = domain.indexOf(".");
+  const maskedDomain =
+    dot > 1 ? domain.slice(0, 1) + "•••" + domain.slice(dot) : domain.slice(0, 1) + "•••";
+  return `${maskedLocal}@${maskedDomain}`;
 }
 
 /** Responsive helper */
@@ -675,6 +762,68 @@ function makeStyles(isMobile: boolean): Record<string, React.CSSProperties> {
       maxWidth: 560,
     },
     topActions: { display: "flex", gap: 10, flexWrap: "wrap" },
+
+    // Receipt row
+    receiptRow: {
+      marginTop: 12,
+      borderRadius: 18,
+      border: "1px solid rgba(255,255,255,0.10)",
+      background: "rgba(255,255,255,0.04)",
+      padding: isMobile ? 12 : 14,
+      display: "flex",
+      gap: 10,
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+    },
+    receiptLeft: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" },
+    receiptRight: { display: "flex", gap: 10, alignItems: "center" },
+    receiptPillOk: {
+      fontSize: 12,
+      padding: "6px 10px",
+      borderRadius: 999,
+      border: "1px solid rgba(255,255,255,0.12)",
+      background: "rgba(34,197,94,0.10)",
+      color: "rgba(255,255,255,0.90)",
+      fontWeight: 850,
+    },
+    receiptPillSoft: {
+      fontSize: 12,
+      padding: "6px 10px",
+      borderRadius: 999,
+      border: "1px solid rgba(255,255,255,0.12)",
+      background: "rgba(255,255,255,0.03)",
+      color: "rgba(255,255,255,0.78)",
+      fontWeight: 800,
+    },
+    receiptPillInfo: {
+      fontSize: 12,
+      padding: "6px 10px",
+      borderRadius: 999,
+      border: "1px solid rgba(255,255,255,0.12)",
+      background: "rgba(96,165,250,0.10)",
+      color: "rgba(255,255,255,0.88)",
+      fontWeight: 800,
+    },
+    receiptLinkBtn: {
+      background: "transparent",
+      border: "1px solid rgba(255,255,255,0.12)",
+      color: "rgba(255,255,255,0.92)",
+      padding: "8px 10px",
+      borderRadius: 12,
+      fontWeight: 850,
+      fontSize: 12.5,
+      cursor: "pointer",
+    },
+    receiptGhostBtn: {
+      background: "rgba(255,255,255,0.02)",
+      border: "1px solid rgba(255,255,255,0.10)",
+      color: "rgba(255,255,255,0.92)",
+      padding: "10px 12px",
+      borderRadius: 14,
+      fontWeight: 850,
+      cursor: "pointer",
+    },
 
     trustRow: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8, marginTop: 10, marginBottom: 8 },
     trustPill: {
@@ -815,6 +964,15 @@ function makeStyles(isMobile: boolean): Record<string, React.CSSProperties> {
       background: "rgba(0,0,0,0.25)",
       color: "rgba(255,255,255,0.92)",
       outline: "none",
+    },
+
+    inlineCode: {
+      display: "inline-block",
+      padding: "2px 8px",
+      borderRadius: 10,
+      background: "rgba(0,0,0,0.22)",
+      border: "1px solid rgba(255,255,255,0.10)",
+      fontWeight: 850,
     },
 
     saveSuccess: { marginTop: 12 },
