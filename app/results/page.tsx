@@ -17,7 +17,6 @@ type Advice = {
 };
 
 type LoadState = "loading" | "ready" | "empty";
-
 type SaveStatus = "idle" | "sending" | "sent" | "error";
 
 const STORAGE = {
@@ -26,6 +25,8 @@ const STORAGE = {
   name: "driveStyleName",
   phone: "driveStylePhone",
 } as const;
+
+type PlanTier = "Silver" | "Gold" | "Platinum";
 
 export default function ResultsPage() {
   const [loadState, setLoadState] = useState<LoadState>("loading");
@@ -39,6 +40,9 @@ export default function ResultsPage() {
   const [saveName, setSaveName] = useState("");
   const [saveEmail, setSaveEmail] = useState("");
   const [savePhone, setSavePhone] = useState("");
+
+  // NEW: plan “plugin” popup state
+  const [selectedPlan, setSelectedPlan] = useState<PlanTier | null>(null);
 
   useEffect(() => {
     try {
@@ -64,17 +68,21 @@ export default function ResultsPage() {
     }
   }, []);
 
+  const topModels = useMemo(() => {
+    return (advice?.models || []).slice(0, 3);
+  }, [advice]);
+
   const shareText = useMemo(() => {
     if (!advice) return "";
-    const models = (advice.models || [])
+    const models = topModels
       .map((m, i) => `${i + 1}. ${m.name}\n   ${m.why}`)
       .join("\n\n");
 
     const insights = (advice.insights || []).map((i) => `• ${i.title}: ${i.text}`).join("\n");
     const verdictLine = advice.verdict ? `\n\nDrive Style Verdict:\n${advice.verdict}` : "";
 
-    return `Drive Style Shortlist\n\nIntro:\n${advice.intro}\n\nInsights:\n${insights}${verdictLine}\n\nShortlist:\n${models}\n\nClosing:\n${advice.closing}\n`;
-  }, [advice]);
+    return `Drive Style Shortlist (Top 3)\n\nIntro:\n${advice.intro}\n\nInsights:\n${insights}${verdictLine}\n\nShortlist:\n${models}\n\nClosing:\n${advice.closing}\n`;
+  }, [advice, topModels]);
 
   async function copyToClipboard() {
     try {
@@ -167,7 +175,8 @@ export default function ResultsPage() {
             <div className="cine-pill">No results</div>
             <h1 className="cine-h2 mt-4">No advice found</h1>
             <p className="mt-3 text-white/70 max-w-2xl">
-              This page needs your latest brief. If you refreshed or opened this page directly, your results may not be available.
+              This page needs your latest brief. If you refreshed or opened this page directly, your results may not be
+              available.
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
@@ -203,9 +212,7 @@ export default function ResultsPage() {
               <div>
                 <div className="cine-pill">Your shortlist</div>
                 <h1 className="cine-h1 mt-4">Your shortlist is ready</h1>
-                <p className="mt-3 text-white/70 max-w-2xl">
-                  5 vehicles that match your brief — ranked by best fit.
-                </p>
+                <p className="mt-3 text-white/70 max-w-2xl">3 vehicles that match your brief — ranked by best fit.</p>
               </div>
 
               <div className="flex gap-3">
@@ -247,7 +254,7 @@ export default function ResultsPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-4">
-              {(advice.models || []).map((m, idx) => {
+              {topModels.map((m, idx) => {
                 const isExpanded = !!expanded[m.name];
                 const long = (m.why || "").trim().length > 180;
                 const text = !long || isExpanded ? m.why : `${m.why.slice(0, 180).trim()}…`;
@@ -325,7 +332,11 @@ export default function ResultsPage() {
                     )}
 
                     <div className="text-xs text-white/60">
-                      Tip: you can also <button type="button" className="underline underline-offset-4" onClick={copyToClipboard}>copy</button> and send it to yourself.
+                      Tip: you can also{" "}
+                      <button type="button" className="underline underline-offset-4" onClick={copyToClipboard}>
+                        copy
+                      </button>{" "}
+                      and send it to yourself.
                     </div>
                   </form>
                 </div>
@@ -342,13 +353,82 @@ export default function ResultsPage() {
                   </div>
                 </div>
               </div>
+
+              {/* NEW: Three plan boxes across full width */}
+              <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <PlanTile
+                  title="Silver"
+                  subtitle="Protected"
+                  onSelect={() => setSelectedPlan("Silver")}
+                />
+                <PlanTile
+                  title="Gold"
+                  subtitle="Fully represented"
+                  onSelect={() => setSelectedPlan("Gold")}
+                />
+                <PlanTile
+                  title="Platinum"
+                  subtitle="Finance & insurance"
+                  onSelect={() => setSelectedPlan("Platinum")}
+                />
+              </div>
             </CineCard>
+          </div>
+        )}
+
+        {/* NEW: popup overlay */}
+        {selectedPlan && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <button
+              type="button"
+              aria-label="Close"
+              className="absolute inset-0 bg-black/60"
+              onClick={() => setSelectedPlan(null)}
+            />
+            <div className="relative w-full max-w-md">
+              <CineCard className="p-6">
+                <div className="cine-pill">Selection</div>
+                <div className="mt-4 text-lg font-semibold tracking-tight">
+                  You have selected {selectedPlan}
+                </div>
+                <div className="mt-2 text-sm text-white/70 leading-relaxed">
+                  This is a placeholder popup for now — we’ll wire the plan behaviour next.
+                </div>
+                <div className="mt-6">
+                  <button type="button" className="cine-btn-primary w-full" onClick={() => setSelectedPlan(null)}>
+                    Close <span aria-hidden>→</span>
+                  </button>
+                </div>
+              </CineCard>
+            </div>
           </div>
         )}
       </section>
 
       <Footer />
     </PremiumShell>
+  );
+}
+
+function PlanTile({
+  title,
+  subtitle,
+  onSelect,
+}: {
+  title: string;
+  subtitle: string;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="text-left rounded-2xl border border-white/10 bg-white/[0.04] p-5 hover:bg-white/[0.06] transition"
+    >
+      <div className="text-xs text-white/60">{subtitle}</div>
+      <div className="mt-2 text-base font-semibold tracking-tight text-white">{title}</div>
+      <div className="mt-2 text-sm text-white/70">Tap to select</div>
+    </button>
   );
 }
 
