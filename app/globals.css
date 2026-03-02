@@ -1,0 +1,198 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+
+html, body { height: 100%; }
+
+body {
+  background: #04060b;
+  color: rgba(255,255,255,0.92);
+}
+
+/* --- Cinematic system (full glow / metallic) --- */
+@layer components {
+  .cine-page {
+    @apply min-h-screen relative overflow-x-hidden;
+  }
+
+  .cine-container {
+    @apply mx-auto w-full max-w-6xl px-5 sm:px-6;
+  }
+
+  .cine-h1 {
+    @apply text-5xl sm:text-6xl md:text-7xl font-semibold tracking-tight;
+    line-height: 1.02;
+    text-shadow:
+      0 2px 18px rgba(0,0,0,0.60),
+      0 0 26px rgba(56,189,248,0.22);
+  }
+
+  .cine-h2 {
+    @apply text-3xl sm:text-4xl font-semibold tracking-tight;
+    text-shadow: 0 1px 14px rgba(0,0,0,0.55);
+  }
+
+  .cine-muted { color: rgba(255,255,255,0.70); }
+
+  .cine-italic-accent {
+    @apply italic;
+    color: rgba(255,255,255,0.95);
+  }
+
+  /* Base card */
+  .cine-card {
+    @apply rounded-2xl border relative overflow-hidden;
+    background-color: rgba(255,255,255,0.05);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    border-color: rgba(255,255,255,0.12);
+  }
+
+  /* Metallic sheen + depth */
+  .cine-card-metal {
+    background:
+      radial-gradient(1000px circle at 20% 10%, rgba(59,130,246,0.28), transparent 46%),
+      radial-gradient(900px circle at 88% 18%, rgba(56,189,248,0.18), transparent 52%),
+      radial-gradient(900px circle at 55% 120%, rgba(99,102,241,0.16), transparent 58%),
+      linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.025));
+  }
+
+  .cine-card-glow {
+    box-shadow:
+      0 70px 240px -150px rgba(59,130,246,1),
+      0 0 0 1px rgba(255,255,255,0.06) inset,
+      0 0 0 1px rgba(125,211,252,0.28),
+      0 0 80px rgba(56,189,248,0.10);
+  }
+
+  .cine-sep {
+    @apply h-px w-full;
+    background: linear-gradient(90deg, transparent, rgba(56,189,248,0.55), transparent);
+    box-shadow: 0 0 22px rgba(56,189,248,0.30);
+  }
+
+  .cine-pill {
+    @apply inline-flex items-center rounded-full border px-3 py-1 text-xs;
+    border-color: rgba(255,255,255,0.12);
+    background-color: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.80);
+    box-shadow: 0 0 22px rgba(56,189,248,0.10);
+  }
+
+  /* Buttons */
+  .cine-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-transform duration-200 relative overflow-hidden;
+  }
+
+  .cine-btn-primary {
+    @apply cine-btn border;
+    border-color: rgba(186,230,253,0.35); /* sky-200-ish */
+    color: rgba(255,255,255,1);
+    background: linear-gradient(180deg, rgba(56,189,248,0.42), rgba(59,130,246,0.14));
+    box-shadow:
+      0 40px 120px -80px rgba(59,130,246,1),
+      0 0 0 1px rgba(255,255,255,0.06) inset,
+      0 0 36px rgba(56,189,248,0.18);
+  }
+
+  .cine-btn-primary::before {
+    content: "";
+    position: absolute;
+    inset: -60% -40%;
+    background: radial-gradient(circle at 40% 40%, rgba(255,255,255,0.22), transparent 45%);
+    transform: rotate(12deg);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  .cine-btn-primary::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(125,211,252,0.25), transparent);
+    transform: translateX(-60%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .cine-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 52px 150px -92px rgba(59,130,246,1),
+      0 0 0 1px rgba(255,255,255,0.07) inset,
+      0 0 52px rgba(56,189,248,0.22);
+  }
+
+  .cine-btn-primary:hover::after {
+    opacity: 1;
+    transform: translateX(60%);
+    transition: transform 700ms ease, opacity 350ms ease;
+  }
+
+  .cine-btn-secondary {
+    @apply cine-btn border;
+    border-color: rgba(255,255,255,0.22);
+    background-color: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.90);
+    box-shadow: 0 0 26px rgba(56,189,248,0.06);
+  }
+
+  .cine-btn-secondary:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255,255,255,0.28);
+    background-color: rgba(255,255,255,0.08);
+  }
+
+  /* Inputs */
+  .cine-input {
+    @apply w-full rounded-xl border px-4 py-3 text-sm outline-none transition;
+    border-color: rgba(255,255,255,0.22);
+    background-color: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.92);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.35) inset;
+  }
+
+  .cine-input::placeholder { color: rgba(255,255,255,0.45); }
+
+  .cine-input:focus {
+    border-color: rgba(125,211,252,0.65);
+    box-shadow:
+      0 0 0 6px rgba(56,189,248,0.20),
+      0 0 38px rgba(56,189,248,0.14);
+  }
+
+  /* Option tiles (quiz) */
+  .cine-option {
+    @apply cine-card rounded-xl px-4 py-4 cursor-pointer transition;
+  }
+
+  .cine-option:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 70px 240px -150px rgba(59,130,246,1),
+      0 0 0 1px rgba(255,255,255,0.06) inset,
+      0 0 0 1px rgba(125,211,252,0.28),
+      0 0 80px rgba(56,189,248,0.12);
+  }
+
+  .cine-option-selected {
+    border-color: rgba(186,230,253,0.50); /* sky-ish */
+    box-shadow:
+      0 85px 280px -175px rgba(59,130,246,1),
+      0 0 0 1px rgba(255,255,255,0.06) inset,
+      0 0 0 1px rgba(125,211,252,0.45),
+      0 0 120px rgba(56,189,248,0.16);
+  }
+
+  /* Hero image blend helper */
+  .cine-hero-frame {
+    @apply relative overflow-hidden rounded-[2rem] border;
+    border-color: rgba(255,255,255,0.12);
+    background-color: rgba(255,255,255,0.03);
+    box-shadow:
+      0 90px 220px -160px rgba(59,130,246,1),
+      0 0 0 1px rgba(255,255,255,0.06) inset;
+  }
+}
