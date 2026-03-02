@@ -48,6 +48,7 @@ export default function QuizPage() {
       environment: String(data.get("environment") || "suburb"),
       comfortSpace: String(data.get("comfortSpace") || "standard"),
       drivingStyle: String(data.get("drivingStyle") || "relaxed"),
+      enginePreference: String(data.get("enginePreference") || "petrol"),
       comfortNeeds: data.getAll("comfortNeeds").map(String),
     };
 
@@ -100,6 +101,10 @@ export default function QuizPage() {
     setStatus("idle");
   }
 
+  // Bigger controls + force dark native dropdown so options are readable
+  const controlClass =
+    "cine-input text-base sm:text-lg bg-white/5 text-white/90 [color-scheme:dark]";
+
   return (
     <PremiumShell header={<TopNav ctaLabel="See my recommendation" />}>
       <section className="cine-container pt-12 pb-14">
@@ -117,193 +122,176 @@ export default function QuizPage() {
           </div>
         </div>
 
-        <div className="mt-10 grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-8">
-            <CineCard className="p-6">
-              <form onSubmit={onSubmit} className="space-y-10">
-                <input name="company" defaultValue="" className="hidden" tabIndex={-1} autoComplete="off" />
+        <div className="mt-10">
+          <CineCard className="p-6">
+            <form onSubmit={onSubmit} className="space-y-10">
+              <input name="company" defaultValue="" className="hidden" tabIndex={-1} autoComplete="off" />
 
-                <Section title="Basics" hint="Your everyday use-case." />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Passengers">
-                    <select name="passengers" defaultValue="couple" className="cine-input" disabled={disable}>
-                      <option value="alone">Mostly alone</option>
-                      <option value="couple">Couple</option>
-                      <option value="family">Family (3–4)</option>
-                      <option value="large_family">Large family (5+)</option>
-                    </select>
-                  </Field>
+              <Section title="Basics" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Field label="Passengers">
+                  <select name="passengers" defaultValue="couple" className={controlClass} disabled={disable}>
+                    <option value="alone">Mostly alone</option>
+                    <option value="couple">Couple</option>
+                    <option value="family">Family (3–4)</option>
+                    <option value="large_family">Large family (5+)</option>
+                  </select>
+                </Field>
 
-                  <Field label="Distance pattern">
-                    <select name="distance" defaultValue="urban_daily" className="cine-input" disabled={disable}>
-                      <option value="very_short">Very short (&lt; 5 km)</option>
-                      <option value="urban_daily">Urban daily (traffic)</option>
-                      <option value="mixed">Mixed use</option>
-                      <option value="long_distance">Long distance / highway</option>
-                    </select>
-                  </Field>
+                <Field label="Distance pattern">
+                  <select name="distance" defaultValue="urban_daily" className={controlClass} disabled={disable}>
+                    <option value="very_short">Very short (&lt; 5 km)</option>
+                    <option value="urban_daily">Urban daily (traffic)</option>
+                    <option value="mixed">Mixed use</option>
+                    <option value="long_distance">Long distance / highway</option>
+                  </select>
+                </Field>
 
-                  <Field label="Preference">
-                    <select name="preference" defaultValue="suv" className="cine-input" disabled={disable}>
-                      <option value="suv">I like SUVs</option>
-                      <option value="sedan">I like sedans</option>
-                      <option value="none">No strong preference</option>
-                    </select>
-                  </Field>
+                <Field label="Preference">
+                  <select name="preference" defaultValue="suv" className={controlClass} disabled={disable}>
+                    <option value="suv">I like SUVs</option>
+                    <option value="sedan">I like sedans</option>
+                    <option value="none">No strong preference</option>
+                  </select>
+                </Field>
 
-                  <Field label="Environment">
-                    <select name="environment" defaultValue="suburb" className="cine-input" disabled={disable}>
-                      <option value="city">City</option>
-                      <option value="suburb">Suburb</option>
-                      <option value="rough">Rural / rough roads</option>
-                    </select>
-                  </Field>
-                </div>
+                {/* MOVED UP: Engine preference directly below Preference */}
+                <Field label="Engine preference">
+                  <select name="enginePreference" defaultValue="petrol" className={controlClass} disabled={disable}>
+                    <option value="petrol">Petrol</option>
+                    <option value="diesel">Diesel</option>
+                    <option value="electric">Electric</option>
+                    <option value="hybrid">Hybrid</option>
+                  </select>
+                </Field>
 
-                <Section title="Comfort & space" hint="Comfort is not body type." />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Driver comfort & space" helper="This is about comfort — not body type.">
-                    <select name="comfortSpace" defaultValue="standard" className="cine-input" disabled={disable}>
+                <Field label="Environment">
+                  <select name="environment" defaultValue="suburb" className={controlClass} disabled={disable}>
+                    <option value="city">City</option>
+                    <option value="suburb">Suburb</option>
+                    <option value="rough">Rural / rough roads</option>
+                  </select>
+                </Field>
+              </div>
+
+              {/* Title wording updated + no hint text */}
+              <Section title="Comfort and space" />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="cine-card cine-card-metal cine-card-glow rounded-2xl p-4">
+                  <div className="text-lg font-semibold">Driver comfort & space</div>
+                  <div className="mt-4">
+                    <select name="comfortSpace" defaultValue="standard" className={controlClass} disabled={disable}>
                       <option value="compact_ok">Compact is fine</option>
                       <option value="standard">Medium / typical</option>
                       <option value="roomy">Roomy / extra space please</option>
                       <option value="easy_entry">Easier entry (higher seat / wide opening)</option>
                     </select>
-                  </Field>
-
-                  <div className="cine-card cine-card-metal cine-card-glow rounded-2xl p-4">
-                    <div className="text-sm font-semibold">Comfort extras (optional)</div>
-                    <div className="mt-3 space-y-2 text-sm text-white/80">
-                      <Check name="comfortNeeds" value="easy_in_out" disabled={disable}>
-                        Easier to get in/out (higher seat)
-                      </Check>
-                      <Check name="comfortNeeds" value="wide_seats" disabled={disable}>
-                        Wide seats / more shoulder room
-                      </Check>
-                      <Check name="comfortNeeds" value="rear_legroom" disabled={disable}>
-                        Extra rear legroom
-                      </Check>
-                      <Check name="comfortNeeds" value="big_boot" disabled={disable}>
-                        Big boot space
-                      </Check>
-                    </div>
                   </div>
                 </div>
 
-                <Section title="Ownership & budget" hint="How you buy and how you drive." />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Budget attitude">
-                    <select name="budgetAttitude" defaultValue="balanced" className="cine-input" disabled={disable}>
-                      <option value="tight">Tight</option>
-                      <option value="balanced">Balanced</option>
-                      <option value="flexible">Flexible</option>
-                    </select>
-                  </Field>
-
-                  <Field label="Ownership personality">
-                    <select name="ownership" defaultValue="neutral" className="cine-input" disabled={disable}>
-                      <option value="loves_cars">I love cars</option>
-                      <option value="neutral">Neutral</option>
-                      <option value="appliance">Just transport</option>
-                    </select>
-                  </Field>
-
-                  <Field label="Driving style">
-                    <select name="drivingStyle" defaultValue="relaxed" className="cine-input" disabled={disable}>
-                      <option value="relaxed">Relaxed</option>
-                      <option value="balanced">Balanced</option>
-                      <option value="enthusiastic">Enthusiastic</option>
-                      <option value="heavy_duty">Heavy duty / towing</option>
-                    </select>
-                  </Field>
-
-                  <Field label="Risk tolerance">
-                    <select name="risk" defaultValue="certainty" className="cine-input" disabled={disable}>
-                      <option value="certainty">I want certainty</option>
-                      <option value="risk_ok">I’m ok with some risk</option>
-                    </select>
-                  </Field>
-
-                  <Field label="Budget (optional)">
-                    <input name="budget" placeholder="e.g. R300k" className="cine-input" disabled={disable} />
-                  </Field>
-
-                  <Field label="Notes (optional)">
-                    <input
-                      name="message"
-                      placeholder="Must-haves (e.g. boot space, automatic)"
-                      className="cine-input"
-                      disabled={disable}
-                    />
-                  </Field>
-                </div>
-
-                <Section title="Save my shortlist" hint="Optional: we’ll email it to you." />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Email (optional)">
-                    <input
-                      name="email"
-                      type="email"
-                      placeholder="If you want your shortlist saved"
-                      className="cine-input"
-                      disabled={disable}
-                    />
-                  </Field>
-                  <Field label="Your name (optional)">
-                    <input name="name" className="cine-input" disabled={disable} />
-                  </Field>
-                  <Field label="Phone (optional)">
-                    <input name="phone" className="cine-input" disabled={disable} />
-                  </Field>
-                </div>
-
-                <div className="pt-2">
-                  <button type="submit" className="cine-btn-primary w-full" disabled={disable}>
-                    {status === "sending" ? "Generating your recommendation..." : "See my recommendation"}
-                    <span aria-hidden>→</span>
-                  </button>
-
-                  {status === "error" && (
-                    <div className="mt-4 rounded-xl border border-red-400/25 bg-red-500/10 p-4 text-sm text-red-100">
-                      Error: {error}
-                    </div>
-                  )}
-
-                  <div className="mt-6 text-xs text-white/60">
-                    © {year} Drive Style • We don’t sell cars — we advise.
+                <div className="cine-card cine-card-metal cine-card-glow rounded-2xl p-4">
+                  <div className="text-lg font-semibold">Comfort extras (optional)</div>
+                  <div className="mt-4 space-y-2 text-base sm:text-lg text-white/80">
+                    <Check name="comfortNeeds" value="easy_in_out" disabled={disable}>
+                      Easier to get in/out (higher seat)
+                    </Check>
+                    <Check name="comfortNeeds" value="wide_seats" disabled={disable}>
+                      Wide seats / more shoulder room
+                    </Check>
+                    <Check name="comfortNeeds" value="rear_legroom" disabled={disable}>
+                      Extra rear legroom
+                    </Check>
+                    <Check name="comfortNeeds" value="big_boot" disabled={disable}>
+                      Big boot space
+                    </Check>
                   </div>
                 </div>
-              </form>
-            </CineCard>
-          </div>
+              </div>
 
-          <aside className="lg:col-span-4 space-y-4">
-            <CineCard className="p-5">
-              <div className="text-sm font-semibold">What you’ll get</div>
-              <div className="mt-3 space-y-2 text-sm text-white/75">
-                <div>• A top recommendation with reasoning</div>
-                <div>• A shortlist of alternatives</div>
-                <div>• Fit, cost, lifestyle insights</div>
-              </div>
-              <div className="mt-5 cine-sep" />
-              <div className="mt-4 text-sm text-white/70">
-                Prefer a human-led process? See the concierge plans on the landing page.
-              </div>
-              <div className="mt-4">
-                <Link href="/#services" className="cine-btn-secondary w-full">
-                  View support plans
-                </Link>
-              </div>
-            </CineCard>
+              <Section title="Ownership & budget" hint="How you buy and how you drive." />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Field label="Budget attitude">
+                  <select name="budgetAttitude" defaultValue="balanced" className={controlClass} disabled={disable}>
+                    <option value="tight">Tight</option>
+                    <option value="balanced">Balanced</option>
+                    <option value="flexible">Flexible</option>
+                  </select>
+                </Field>
 
-            <CineCard className="p-5">
-              <div className="text-sm font-semibold">No dealership energy</div>
-              <div className="mt-2 text-sm text-white/70 leading-relaxed">
-                Drive Style is not a dealership and not a comparison site. It’s a boutique advisor — calm, structured,
-                explainable.
+                <Field label="Ownership personality">
+                  <select name="ownership" defaultValue="neutral" className={controlClass} disabled={disable}>
+                    <option value="loves_cars">I love cars</option>
+                    <option value="neutral">Neutral</option>
+                    <option value="appliance">Just transport</option>
+                  </select>
+                </Field>
+
+                <Field label="Driving style">
+                  <select name="drivingStyle" defaultValue="relaxed" className={controlClass} disabled={disable}>
+                    <option value="relaxed">Relaxed</option>
+                    <option value="balanced">Balanced</option>
+                    <option value="enthusiastic">Enthusiastic</option>
+                    <option value="heavy_duty">Heavy duty / towing</option>
+                  </select>
+                </Field>
+
+                <Field label="Risk tolerance">
+                  <select name="risk" defaultValue="certainty" className={controlClass} disabled={disable}>
+                    <option value="certainty">I want certainty</option>
+                    <option value="risk_ok">I’m ok with some risk</option>
+                  </select>
+                </Field>
+
+                <Field label="Budget (optional)">
+                  <input name="budget" placeholder="e.g. R300k" className={controlClass} disabled={disable} />
+                </Field>
+
+                <Field label="Notes (optional)">
+                  <input
+                    name="message"
+                    placeholder="Must-haves (e.g. boot space, automatic)"
+                    className={controlClass}
+                    disabled={disable}
+                  />
+                </Field>
               </div>
-            </CineCard>
-          </aside>
+
+              <Section title="Save my shortlist" hint="Optional: we’ll email it to you." />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Field label="Email (optional)">
+                  <input
+                    name="email"
+                    type="email"
+                    placeholder="If you want your shortlist saved"
+                    className={controlClass}
+                    disabled={disable}
+                  />
+                </Field>
+                <Field label="Your name (optional)">
+                  <input name="name" className={controlClass} disabled={disable} />
+                </Field>
+                <Field label="Phone (optional)">
+                  <input name="phone" className={controlClass} disabled={disable} />
+                </Field>
+              </div>
+
+              <div className="pt-2">
+                <button type="submit" className="cine-btn-primary w-full text-base sm:text-lg" disabled={disable}>
+                  {status === "sending" ? "Generating your recommendation..." : "See my recommendation"}
+                  <span aria-hidden>→</span>
+                </button>
+
+                {status === "error" && (
+                  <div className="mt-4 rounded-xl border border-red-400/25 bg-red-500/10 p-4 text-sm text-red-100">
+                    Error: {error}
+                  </div>
+                )}
+
+                <div className="mt-6 text-sm text-white/60">© {year} Drive Style • We don’t sell cars — we advise.</div>
+              </div>
+            </form>
+          </CineCard>
         </div>
       </section>
 
@@ -316,10 +304,10 @@ function Section({ title, hint }: { title: string; hint?: string }) {
   return (
     <div>
       <div className="flex items-center gap-4">
-        <div className="text-sm font-semibold tracking-tight">{title}</div>
+        <div className="text-xl font-semibold tracking-tight whitespace-nowrap">{title}</div>
         <div className="cine-sep" />
       </div>
-      {hint ? <div className="mt-1 text-xs text-white/60">{hint}</div> : null}
+      {hint ? <div className="mt-1 text-sm text-white/60">{hint}</div> : null}
     </div>
   );
 }
@@ -335,9 +323,9 @@ function Field({
 }) {
   return (
     <label className="block">
-      <div className="text-sm text-white/80 mb-2">{label}</div>
+      <div className="text-lg text-white/90 mb-2">{label}</div>
       {children}
-      {helper ? <div className="mt-2 text-xs text-white/60">{helper}</div> : null}
+      {helper ? <div className="mt-2 text-sm text-white/60">{helper}</div> : null}
     </label>
   );
 }
@@ -354,7 +342,7 @@ function Check({
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex items-start gap-3">
+    <label className="flex items-start gap-3 text-base sm:text-lg">
       <input
         type="checkbox"
         name={name}
