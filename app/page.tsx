@@ -7,8 +7,7 @@ import TopNav from "@/components/cinematic/TopNav";
 import StepCard from "@/components/cinematic/StepCard";
 import CineCard from "@/components/cinematic/CineCard";
 import Footer from "@/components/cinematic/Footer";
-
-type PlanTier = "Silver" | "Gold" | "Platinum";
+import EngagementModal, { PlanTier } from "@/components/EngagementModal";
 
 export default function HomePage() {
   const [selectedPlan, setSelectedPlan] = useState<PlanTier | null>(null);
@@ -143,31 +142,31 @@ export default function HomePage() {
           {/* REPLACED: 4 cards -> 3 cards, stretched evenly */}
           <div className="mt-7 grid grid-cols-1 md:grid-cols-3 gap-4">
             <CineCard className="p-5">
-  <button type="button" className="w-full text-left" onClick={() => setSelectedPlan("Silver")}>
-    <div className="text-sm font-semibold">Silver</div>
-    <div className="mt-2 text-sm text-white/70 leading-relaxed">
-      Deeper shortlist, messaging templates, finance guidance, negotiation confidence.
-    </div>
-  </button>
-</CineCard>
+              <button type="button" className="w-full text-left" onClick={() => setSelectedPlan("Silver")}>
+                <div className="text-sm font-semibold">Silver</div>
+                <div className="mt-2 text-sm text-white/70 leading-relaxed">
+                  Deeper shortlist, messaging templates, finance guidance, negotiation confidence.
+                </div>
+              </button>
+            </CineCard>
 
-<CineCard className="p-5">
-  <button type="button" className="w-full text-left" onClick={() => setSelectedPlan("Gold")}>
-    <div className="text-sm font-semibold">Gold</div>
-    <div className="mt-2 text-sm text-white/70 leading-relaxed">
-      Hands-off support, verification help, guidance until purchase.
-    </div>
-  </button>
-</CineCard>
+            <CineCard className="p-5">
+              <button type="button" className="w-full text-left" onClick={() => setSelectedPlan("Gold")}>
+                <div className="text-sm font-semibold">Gold</div>
+                <div className="mt-2 text-sm text-white/70 leading-relaxed">
+                  Hands-off support, verification help, guidance until purchase.
+                </div>
+              </button>
+            </CineCard>
 
-<CineCard className="p-5">
-  <button type="button" className="w-full text-left" onClick={() => setSelectedPlan("Platinum")}>
-    <div className="text-sm font-semibold">Platinum</div>
-    <div className="mt-2 text-sm text-white/70 leading-relaxed">
-      Optional help coordinating finance and insurance steps.
-    </div>
-  </button>
-</CineCard>
+            <CineCard className="p-5">
+              <button type="button" className="w-full text-left" onClick={() => setSelectedPlan("Platinum")}>
+                <div className="text-sm font-semibold">Platinum</div>
+                <div className="mt-2 text-sm text-white/70 leading-relaxed">
+                  Optional help coordinating finance and insurance steps.
+                </div>
+              </button>
+            </CineCard>
           </div>
 
           <div className="mt-10">
@@ -178,31 +177,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* NEW: popup overlay (Option A behaviour) */}
-      {selectedPlan && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <button
-            type="button"
-            aria-label="Close"
-            className="absolute inset-0 bg-black/60"
-            onClick={() => setSelectedPlan(null)}
-          />
-          <div className="relative w-full max-w-md">
-            <CineCard className="p-6">
-              <div className="cine-pill">Selection</div>
-              <div className="mt-4 text-lg font-semibold tracking-tight">You have selected {selectedPlan}</div>
-              <div className="mt-2 text-sm text-white/70 leading-relaxed">
-                This is a placeholder popup for now — we’ll wire the plan behaviour next.
-              </div>
-              <div className="mt-6">
-                <button type="button" className="cine-btn-primary w-full" onClick={() => setSelectedPlan(null)}>
-                  Close <span aria-hidden>→</span>
-                </button>
-              </div>
-            </CineCard>
-          </div>
-        </div>
-      )}
+      {/* Engagement modal (replaces placeholder popup) */}
+      <EngagementModal open={!!selectedPlan} tier={selectedPlan} onClose={() => setSelectedPlan(null)} />
 
       <Footer />
     </PremiumShell>

@@ -7,6 +7,7 @@ import TopNav from "@/components/cinematic/TopNav";
 import CineCard from "@/components/cinematic/CineCard";
 import Footer from "@/components/cinematic/Footer";
 import SubscribeCtas from "@/components/SubscribeCtas";
+import EngagementModal, { PlanTier } from "@/components/EngagementModal";
 
 type Advice = {
   intro: string;
@@ -26,8 +27,6 @@ const STORAGE = {
   phone: "driveStylePhone",
 } as const;
 
-type PlanTier = "Silver" | "Gold" | "Platinum";
-
 export default function ResultsPage() {
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [advice, setAdvice] = useState<Advice | null>(null);
@@ -41,7 +40,7 @@ export default function ResultsPage() {
   const [saveEmail, setSaveEmail] = useState("");
   const [savePhone, setSavePhone] = useState("");
 
-  // NEW: plan “plugin” popup state
+  // Plan engagement modal state
   const [selectedPlan, setSelectedPlan] = useState<PlanTier | null>(null);
 
   useEffect(() => {
@@ -354,55 +353,25 @@ export default function ResultsPage() {
                 </div>
               </div>
 
-              {/* NEW: Three plan boxes across full width */}
+              {/* Three plan boxes across full width */}
               <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <PlanTile
-                  title="Silver"
-                  subtitle="Protected"
-                  onSelect={() => setSelectedPlan("Silver")}
-                />
-                <PlanTile
-                  title="Gold"
-                  subtitle="Fully represented"
-                  onSelect={() => setSelectedPlan("Gold")}
-                />
-                <PlanTile
-                  title="Platinum"
-                  subtitle="Finance & insurance"
-                  onSelect={() => setSelectedPlan("Platinum")}
-                />
+                <PlanTile title="Silver" subtitle="Protected" onSelect={() => setSelectedPlan("Silver")} />
+                <PlanTile title="Gold" subtitle="Fully represented" onSelect={() => setSelectedPlan("Gold")} />
+                <PlanTile title="Platinum" subtitle="Finance & insurance" onSelect={() => setSelectedPlan("Platinum")} />
               </div>
             </CineCard>
           </div>
         )}
 
-        {/* NEW: popup overlay */}
-        {selectedPlan && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <button
-              type="button"
-              aria-label="Close"
-              className="absolute inset-0 bg-black/60"
-              onClick={() => setSelectedPlan(null)}
-            />
-            <div className="relative w-full max-w-md">
-              <CineCard className="p-6">
-                <div className="cine-pill">Selection</div>
-                <div className="mt-4 text-lg font-semibold tracking-tight">
-                  You have selected {selectedPlan}
-                </div>
-                <div className="mt-2 text-sm text-white/70 leading-relaxed">
-                  This is a placeholder popup for now — we’ll wire the plan behaviour next.
-                </div>
-                <div className="mt-6">
-                  <button type="button" className="cine-btn-primary w-full" onClick={() => setSelectedPlan(null)}>
-                    Close <span aria-hidden>→</span>
-                  </button>
-                </div>
-              </CineCard>
-            </div>
-          </div>
-        )}
+        {/* Engagement modal (ONLY modal now) */}
+        <EngagementModal
+          open={!!selectedPlan}
+          tier={selectedPlan}
+          onClose={() => setSelectedPlan(null)}
+          defaultName={saveName}
+          defaultEmail={saveEmail}
+          defaultPhone={savePhone}
+        />
       </section>
 
       <Footer />
