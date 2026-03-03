@@ -102,15 +102,13 @@ export default function QuizPage() {
   }
 
   // Bigger controls + force dark native dropdown so options are readable
-  const controlClass =
-    "cine-input text-base sm:text-lg bg-white/5 text-white/90 [color-scheme:dark]";
+  const controlClass = "cine-input text-base sm:text-lg bg-white/5 text-white/90 [color-scheme:dark]";
 
   return (
     <PremiumShell header={<TopNav ctaLabel="See my recommendation" />}>
-      <section className="cine-container pt-12 pb-14">
+      <section className="cine-container pt-6 pb-14">
         <div className="max-w-3xl">
-          <div className="cine-pill">Drive Style intake</div>
-          <h1 className="cine-h1 mt-4">Answer quick questions</h1>
+          <h1 className="cine-h1 mt-4">Answer some quick questions please</h1>
           <p className="mt-4 text-lg text-white/75 leading-relaxed">
             A few details about your lifestyle and needs — then you’ll get your shortlist and a simple plan.
           </p>
@@ -130,7 +128,12 @@ export default function QuizPage() {
               <Section title="Basics" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <Field label="Passengers">
-                  <select name="passengers" defaultValue="couple" className={controlClass} disabled={disable}>
+                  <select
+                    name="passengers"
+                    defaultValue="couple"
+                    className={`${controlClass} ds-select`}
+                    disabled={disable}
+                  >
                     <option value="alone">Mostly alone</option>
                     <option value="couple">Couple</option>
                     <option value="family">Family (3–4)</option>
@@ -139,7 +142,12 @@ export default function QuizPage() {
                 </Field>
 
                 <Field label="Distance pattern">
-                  <select name="distance" defaultValue="urban_daily" className={controlClass} disabled={disable}>
+                  <select
+                    name="distance"
+                    defaultValue="urban_daily"
+                    className={`${controlClass} ds-select`}
+                    disabled={disable}
+                  >
                     <option value="very_short">Very short (&lt; 5 km)</option>
                     <option value="urban_daily">Urban daily (traffic)</option>
                     <option value="mixed">Mixed use</option>
@@ -148,16 +156,25 @@ export default function QuizPage() {
                 </Field>
 
                 <Field label="Preference">
-                  <select name="preference" defaultValue="suv" className={controlClass} disabled={disable}>
+                  <select
+                    name="preference"
+                    defaultValue="suv"
+                    className={`${controlClass} ds-select`}
+                    disabled={disable}
+                  >
                     <option value="suv">I like SUVs</option>
                     <option value="sedan">I like sedans</option>
                     <option value="none">No strong preference</option>
                   </select>
                 </Field>
 
-                {/* MOVED UP: Engine preference directly below Preference */}
                 <Field label="Engine preference">
-                  <select name="enginePreference" defaultValue="petrol" className={controlClass} disabled={disable}>
+                  <select
+                    name="enginePreference"
+                    defaultValue="petrol"
+                    className={`${controlClass} ds-select`}
+                    disabled={disable}
+                  >
                     <option value="petrol">Petrol</option>
                     <option value="diesel">Diesel</option>
                     <option value="electric">Electric</option>
@@ -166,7 +183,12 @@ export default function QuizPage() {
                 </Field>
 
                 <Field label="Environment">
-                  <select name="environment" defaultValue="suburb" className={controlClass} disabled={disable}>
+                  <select
+                    name="environment"
+                    defaultValue="suburb"
+                    className={`${controlClass} ds-select`}
+                    disabled={disable}
+                  >
                     <option value="city">City</option>
                     <option value="suburb">Suburb</option>
                     <option value="rough">Rural / rough roads</option>
@@ -174,14 +196,18 @@ export default function QuizPage() {
                 </Field>
               </div>
 
-              {/* Title wording updated + no hint text */}
               <Section title="Comfort and space" />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="cine-card cine-card-metal cine-card-glow rounded-2xl p-4">
                   <div className="text-lg font-semibold">Driver comfort & space</div>
                   <div className="mt-4">
-                    <select name="comfortSpace" defaultValue="standard" className={controlClass} disabled={disable}>
+                    <select
+                      name="comfortSpace"
+                      defaultValue="standard"
+                      className={`${controlClass} ds-select`}
+                      disabled={disable}
+                    >
                       <option value="compact_ok">Compact is fine</option>
                       <option value="standard">Medium / typical</option>
                       <option value="roomy">Roomy / extra space please</option>
@@ -212,7 +238,12 @@ export default function QuizPage() {
               <Section title="Ownership & budget" hint="How you buy and how you drive." />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <Field label="Budget attitude">
-                  <select name="budgetAttitude" defaultValue="balanced" className={controlClass} disabled={disable}>
+                  <select
+                    name="budgetAttitude"
+                    defaultValue="balanced"
+                    className={`${controlClass} ds-select`}
+                    disabled={disable}
+                  >
                     <option value="tight">Tight</option>
                     <option value="balanced">Balanced</option>
                     <option value="flexible">Flexible</option>
@@ -220,7 +251,12 @@ export default function QuizPage() {
                 </Field>
 
                 <Field label="Ownership personality">
-                  <select name="ownership" defaultValue="neutral" className={controlClass} disabled={disable}>
+                  <select
+                    name="ownership"
+                    defaultValue="neutral"
+                    className={`${controlClass} ds-select`}
+                    disabled={disable}
+                  >
                     <option value="loves_cars">I love cars</option>
                     <option value="neutral">Neutral</option>
                     <option value="appliance">Just transport</option>
@@ -228,7 +264,12 @@ export default function QuizPage() {
                 </Field>
 
                 <Field label="Driving style">
-                  <select name="drivingStyle" defaultValue="relaxed" className={controlClass} disabled={disable}>
+                  <select
+                    name="drivingStyle"
+                    defaultValue="relaxed"
+                    className={`${controlClass} ds-select`}
+                    disabled={disable}
+                  >
                     <option value="relaxed">Relaxed</option>
                     <option value="balanced">Balanced</option>
                     <option value="enthusiastic">Enthusiastic</option>
@@ -237,7 +278,12 @@ export default function QuizPage() {
                 </Field>
 
                 <Field label="Risk tolerance">
-                  <select name="risk" defaultValue="certainty" className={controlClass} disabled={disable}>
+                  <select
+                    name="risk"
+                    defaultValue="certainty"
+                    className={`${controlClass} ds-select`}
+                    disabled={disable}
+                  >
                     <option value="certainty">I want certainty</option>
                     <option value="risk_ok">I’m ok with some risk</option>
                   </select>
@@ -294,6 +340,18 @@ export default function QuizPage() {
           </CineCard>
         </div>
       </section>
+
+      {/* Global style to make dropdown options readable */}
+      <style jsx global>{`
+        select.ds-select option {
+          color: #0b1220;
+          background: #ffffff;
+        }
+        select.ds-select optgroup {
+          color: #0b1220;
+          background: #ffffff;
+        }
+      `}</style>
 
       <Footer />
     </PremiumShell>
