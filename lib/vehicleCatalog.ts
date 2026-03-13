@@ -56,18 +56,22 @@ export function queryVehicles(q: {
   });
 }
 
-export type VehicleType =
-  | "MANUAL_PASSENGER_SEDAN"
-  | "AUTOMATIC_SEDAN"
-  | "ESTATE_MPV"
-  | "CROSSOVER_SUV"
-  | "PICKUP_BAKKIE";
+
 
 export type VehicleRecord = {
   id: string;
   name: string;
-  vehicleType: VehicleType;
+  brand: string;
+  model: string;
+  features: string[];
   msrp: number;
+  bodyStyle: string;
+  transmission: string;
+  fuelType: string;
+  drivetrain: string;
+  performance: string;
+  luxury: string;
+  fuelEfficiency: string;
 };
 
 export function getVehicleCatalog(): VehicleRecord[] {
