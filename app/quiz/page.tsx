@@ -37,11 +37,12 @@ export default function QuizPage() {
       company: String(data.get("company") || ""),
       source: "quiz",
     };
-
+console.log("Raw budget field:", data.get("budget"));
     const advicePayload = {
       passengers: String(data.get("passengers") || "couple"),
       distance: String(data.get("distance") || "urban_daily"),
       budget: String(data.get("budgetAttitude") || "balanced"),
+       budgetAmount: String(data.get("budget") || ""),
       ownership: String(data.get("ownership") || "neutral"),
       risk: String(data.get("risk") || "certainty"),
       preference: String(data.get("preference") || "suv"),

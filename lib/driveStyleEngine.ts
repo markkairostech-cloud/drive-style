@@ -96,6 +96,14 @@ function getStableId(v: any): string {
   return String(id ?? "");
 }
 
+function getStableBrand(v: any): string {
+  const brand = String(v?.brand ?? "").trim().toLowerCase();
+  if (brand) return brand;
+
+  const name = String(v?.name ?? "").trim().toLowerCase();
+  return name.split(" ")[0] || "";
+}
+
 function getComfortSpace(input: BriefInput): "compact_ok" | "standard" | "roomy" | "easy_entry" {
   const v = input.comfortSpace;
   if (v === "compact_ok" || v === "standard" || v === "roomy" || v === "easy_entry") return v;
@@ -423,7 +431,7 @@ function applyBudgetBand(
 ) {
   const rawMin = Math.round(target * (1 - band));
   const min = widenUpOnly ? Math.max(roomyFloor, rawMin) : rawMin;
-  const max = Math.round(target * (1 + band));
+  const max = target;
 
   const inRange = items.filter((v: any) => {
     const price = getPrice(v);
@@ -443,7 +451,8 @@ function shortlistWithProgressiveFallback(input: BriefInput, category: string) {
   const needs = getComfortNeeds(input);
   const roomyMode = comfortSpace === "roomy" && input.preference !== "sedan";
 
-  const target = parseBudgetAmountToNumber(input.budgetAmount);
+  const customerBudget = parseBudgetAmountToNumber(input.budgetAmount);
+  const target = customerBudget ? Math.round(customerBudget * 0.9) : null;
   const bands = target ? getBudgetBands(input.budget) : [];
   const priceFloor = roomyMode ? getRoomyPriceFloor(input, target) : 0;
 
@@ -451,10 +460,18 @@ function shortlistWithProgressiveFallback(input: BriefInput, category: string) {
   // do not include explicit PASSENGER/COMMERCIAL tokens in your catalog.
   const all = queryVehicles({});
 
-  // "Never recommend small hatch/city cars" (token-based where possible)
-  const allNonSmall = all.filter((v: any) => !isSmallDisallowed(v));
+  const hardBudgetCapped = target
+    ? all.filter((v: any) => {
+        const price = getPrice(v);
+        if (price == null) return true;
+        return price <= target;
+      })
+    : all;
 
-  let base = all;
+  // "Never recommend small hatch/city cars" (token-based where possible)
+  const allNonSmall = hardBudgetCapped.filter((v: any) => !isSmallDisallowed(v));
+
+  let base = hardBudgetCapped;
 
   if (roomyMode) {
     base = allNonSmall
@@ -509,7 +526,20 @@ function shortlistWithProgressiveFallback(input: BriefInput, category: string) {
 
   function rankAndTake(items: any[]) {
     const ranked = sortByScoreThenBudgetDistance(items, scoreMap, target);
-    return ranked.slice(0, Math.min(5, ranked.length));
+    const uniqueBrands: any[] = [];
+    const seenBrands = new Set<string>();
+
+    for (const v of ranked) {
+      const brand = getStableBrand(v);
+      if (!brand || seenBrands.has(brand)) continue;
+      seenBrands.add(brand);
+      uniqueBrands.push(v);
+      if (uniqueBrands.length === 3) break;
+    }
+
+    if (uniqueBrands.length) return uniqueBrands;
+
+    return ranked.slice(0, Math.min(3, ranked.length));
   }
 
   if (!target) {
@@ -545,6 +575,9 @@ function shortlistWithProgressiveFallback(input: BriefInput, category: string) {
 // -------------------------------------------
 
 export function generateAdvice(input: BriefInput): Advice {
+
+  console.log("DriveStyle input:", input);
+
   const comfortSpace = getComfortSpace(input);
 
   let category = pickCategory(input.passengers, input.environment, input.preference);
