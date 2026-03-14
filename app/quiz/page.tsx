@@ -37,7 +37,7 @@ export default function QuizPage() {
       company: String(data.get("company") || ""),
       source: "quiz",
     };
-console.log("Raw budget field:", data.get("budget"));
+
     const advicePayload = {
       passengers: String(data.get("passengers") || "couple"),
       distance: String(data.get("distance") || "urban_daily"),

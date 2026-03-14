@@ -576,8 +576,7 @@ function shortlistWithProgressiveFallback(input: BriefInput, category: string) {
 
 export function generateAdvice(input: BriefInput): Advice {
 
-  console.log("DriveStyle input:", input);
-
+  
   const comfortSpace = getComfortSpace(input);
 
   let category = pickCategory(input.passengers, input.environment, input.preference);
