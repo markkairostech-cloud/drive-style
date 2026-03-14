@@ -1,4 +1,3 @@
-\
 // ===============================
 // Drive Style Advisor Engine v4.0
 // Structured-data alignment update
@@ -598,7 +597,7 @@ function shortlistWithProgressiveFallback(input: BriefInput, category: TargetCat
 
 function buildWhy(v: Vehicle, input: BriefInput, comfortSpace: string, needs: string[]) {
   const bits: string[] = [];
-  const type = prettyVehicleType?.(v.vehicleType) || prettyBodyStyle(v);
+  const type = prettyVehicleType?.(v.vehicleType || "") || prettyBodyStyle(v);
 
   if (isSuv(v)) bits.push("SUV / crossover shape");
   if (isSedan(v)) bits.push("sedan shape");
