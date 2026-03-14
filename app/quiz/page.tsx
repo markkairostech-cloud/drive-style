@@ -1,3 +1,4 @@
+\
 "use client";
 
 import Link from "next/link";
@@ -40,21 +41,19 @@ export default function QuizPage() {
 
     const advicePayload = {
       passengers: String(data.get("passengers") || "couple"),
-      distance: String(data.get("distance") || "urban_daily"),
+      distance: String(data.get("distance") || "mixed"),
       budget: String(data.get("budgetAttitude") || "balanced"),
-       budgetAmount: String(data.get("budget") || ""),
+      budgetAmount: String(data.get("budget") || ""),
       ownership: String(data.get("ownership") || "neutral"),
-      risk: String(data.get("risk") || "certainty"),
-      preference: String(data.get("preference") || "suv"),
+      preference: String(data.get("preference") || "none"),
       environment: String(data.get("environment") || "suburb"),
       comfortSpace: String(data.get("comfortSpace") || "standard"),
-      drivingStyle: String(data.get("drivingStyle") || "relaxed"),
-      enginePreference: String(data.get("enginePreference") || "petrol"),
+      drivingStyle: String(data.get("drivingStyle") || "balanced"),
+      fuelPreference: String(data.get("fuelPreference") || "none"),
       comfortNeeds: data.getAll("comfortNeeds").map(String),
     };
 
     try {
-      // Submit lead (best-effort)
       if (leadPayload.email || leadPayload.phone || leadPayload.name) {
         fetch("/api/lead", {
           method: "POST",
@@ -63,7 +62,6 @@ export default function QuizPage() {
         }).catch(() => undefined);
       }
 
-      // Get advice
       const res = await fetch("/api/advice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,7 +75,6 @@ export default function QuizPage() {
 
       const payload = await res.json();
 
-      // Persist for results page
       try {
         sessionStorage.setItem("driveStyleAdvice", JSON.stringify(payload));
         localStorage.setItem("driveStyleAdvice", JSON.stringify(payload));
@@ -102,7 +99,6 @@ export default function QuizPage() {
     setStatus("idle");
   }
 
-  // Bigger controls + force dark native dropdown so options are readable
   const controlClass = "cine-input text-base sm:text-lg bg-white/5 text-white/90 [color-scheme:dark]";
 
   return (
@@ -128,7 +124,7 @@ export default function QuizPage() {
 
               <Section title="Basics" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <Field label="Passengers">
+                <Field label="Passengers most of the time">
                   <select
                     name="passengers"
                     defaultValue="couple"
@@ -145,7 +141,7 @@ export default function QuizPage() {
                 <Field label="Distance pattern">
                   <select
                     name="distance"
-                    defaultValue="urban_daily"
+                    defaultValue="mixed"
                     className={`${controlClass} ds-select`}
                     disabled={disable}
                   >
@@ -156,29 +152,29 @@ export default function QuizPage() {
                   </select>
                 </Field>
 
-                <Field label="Preference">
+                <Field label="Body style preference">
                   <select
                     name="preference"
-                    defaultValue="suv"
+                    defaultValue="none"
                     className={`${controlClass} ds-select`}
                     disabled={disable}
                   >
-                    <option value="suv">I like SUVs</option>
-                    <option value="sedan">I like sedans</option>
+                    <option value="suv">I prefer SUVs / crossovers</option>
+                    <option value="sedan">I prefer sedans</option>
                     <option value="none">No strong preference</option>
                   </select>
                 </Field>
 
-                <Field label="Engine preference">
+                <Field label="Fuel preference">
                   <select
-                    name="enginePreference"
-                    defaultValue="petrol"
+                    name="fuelPreference"
+                    defaultValue="none"
                     className={`${controlClass} ds-select`}
                     disabled={disable}
                   >
+                    <option value="none">No strong preference</option>
                     <option value="petrol">Petrol</option>
                     <option value="diesel">Diesel</option>
-                    <option value="electric">Electric</option>
                     <option value="hybrid">Hybrid</option>
                   </select>
                 </Field>
@@ -267,7 +263,7 @@ export default function QuizPage() {
                 <Field label="Driving style">
                   <select
                     name="drivingStyle"
-                    defaultValue="relaxed"
+                    defaultValue="balanced"
                     className={`${controlClass} ds-select`}
                     disabled={disable}
                   >
@@ -278,18 +274,6 @@ export default function QuizPage() {
                   </select>
                 </Field>
 
-                <Field label="Risk tolerance">
-                  <select
-                    name="risk"
-                    defaultValue="certainty"
-                    className={`${controlClass} ds-select`}
-                    disabled={disable}
-                  >
-                    <option value="certainty">I want certainty</option>
-                    <option value="risk_ok">I’m ok with some risk</option>
-                  </select>
-                </Field>
-
                 <Field label="Budget (optional)">
                   <input name="budget" placeholder="e.g. R300k" className={controlClass} disabled={disable} />
                 </Field>
@@ -297,7 +281,7 @@ export default function QuizPage() {
                 <Field label="Notes (optional)">
                   <input
                     name="message"
-                    placeholder="Must-haves (e.g. boot space, automatic)"
+                    placeholder="Must-haves or anything unusual"
                     className={controlClass}
                     disabled={disable}
                   />
@@ -342,7 +326,6 @@ export default function QuizPage() {
         </div>
       </section>
 
-      {/* Global style to make dropdown options readable */}
       <style jsx global>{`
         select.ds-select option {
           color: #0b1220;

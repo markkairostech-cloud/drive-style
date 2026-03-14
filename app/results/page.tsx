@@ -13,7 +13,7 @@ type Advice = {
   intro: string;
   insights: { title: string; text: string }[];
   verdict?: string;
-  models: { name: string; why: string }[];
+  models: { name: string; why: string; msrp?: number }[];
   closing: string;
 };
 
@@ -74,7 +74,7 @@ export default function ResultsPage() {
   const shareText = useMemo(() => {
     if (!advice) return "";
     const models = topModels
-      .map((m, i) => `${i + 1}. ${m.name}\n   ${m.why}`)
+      .map((m, i) => `${i + 1}. ${m.name} — R${m.msrp?.toLocaleString()}\n   ${m.why}`)
       .join("\n\n");
 
     const insights = (advice.insights || []).map((i) => `• ${i.title}: ${i.text}`).join("\n");
@@ -264,6 +264,7 @@ export default function ResultsPage() {
                       <div>
                         <div className="cine-pill">#{String(idx + 1).padStart(2, "0")}</div>
                         <div className="mt-3 text-lg font-semibold tracking-tight">{m.name}</div>
+                        <div className="text-sm text-white/60">R{m.msrp?.toLocaleString()}</div>
                         <div className="mt-2 text-sm text-white/70 leading-relaxed">{text}</div>
                       </div>
                       <div className="flex gap-3 sm:flex-col sm:items-stretch">
