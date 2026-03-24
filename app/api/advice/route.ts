@@ -44,6 +44,7 @@ export async function POST(request: Request) {
 
     const comfortSpaceAllowed = ["compact_ok", "standard", "roomy", "easy_entry"] as const;
     const comfortNeedsAllowed = ["easy_in_out", "wide_seats", "rear_legroom", "big_boot"] as const;
+    const budgetTypeAllowed = ["purchase_price", "monthly_hp", "monthly_lease"] as const;
 
     // ---- Normalise into expected BriefInput shape ----
     const normalized = {
@@ -56,7 +57,7 @@ export async function POST(request: Request) {
      preference: oneOf(body?.preference, preferenceAllowed, "none"),
       drivingStyle: oneOf(body?.drivingStyle, drivingStyleAllowed, "relaxed"),
       budgetAmount: asString(body?.budgetAmount, ""),
-      budgetType: asString(body?.budgetType, "purchase_price"),
+      budgetType: oneOf(body?.budgetType, budgetTypeAllowed, "purchase_price"),
 
       // ✅ Comfort & space signals (critical for “roomy” logic)
       comfortSpace: oneOf(body?.comfortSpace, comfortSpaceAllowed, "standard"),
