@@ -33,6 +33,7 @@ export default function QuizPage() {
       email: String(data.get("email") || ""),
       phone: String(data.get("phone") || ""),
       budget: String(data.get("budget") || ""),
+      budgetType: String(data.get("budgetType") || "purchase_price"),
       message: String(data.get("message") || ""),
       company: String(data.get("company") || ""),
       source: "quiz",
@@ -151,6 +152,19 @@ export default function QuizPage() {
                   </select>
                 </Field>
 
+                <Field label="Environment">
+                  <select
+                    name="environment"
+                    defaultValue="suburb"
+                    className={`${controlClass} ds-select`}
+                    disabled={disable}
+                  >
+                    <option value="city">City</option>
+                    <option value="suburb">Suburb</option>
+                    <option value="rough">Rural / rough roads</option>
+                  </select>
+                </Field>
+
                 <Field label="Body style preference">
                   <select
                     name="preference"
@@ -158,8 +172,11 @@ export default function QuizPage() {
                     className={`${controlClass} ds-select`}
                     disabled={disable}
                   >
-                    <option value="suv">I prefer SUVs / crossovers</option>
-                    <option value="sedan">I prefer sedans</option>
+                    <option value="suv">SUV / crossover</option>
+                    <option value="sedan">Sedan</option>
+                    <option value="hatch">Hatchback / small car</option>
+                    <option value="mpv">MPV / 7-seater</option>
+                    <option value="pickup">Bakkie / pickup</option>
                     <option value="none">No strong preference</option>
                   </select>
                 </Field>
@@ -178,19 +195,7 @@ export default function QuizPage() {
                   </select>
                 </Field>
 
-                <Field label="Environment">
-                  <select
-                    name="environment"
-                    defaultValue="suburb"
-                    className={`${controlClass} ds-select`}
-                    disabled={disable}
-                  >
-                    <option value="city">City</option>
-                    <option value="suburb">Suburb</option>
-                    <option value="rough">Rural / rough roads</option>
-                  </select>
-                </Field>
-              </div>
+                </div>
 
               <Section title="Comfort and space" />
 
@@ -246,19 +251,6 @@ export default function QuizPage() {
                   </select>
                 </Field>
 
-                <Field label="Ownership personality">
-                  <select
-                    name="ownership"
-                    defaultValue="neutral"
-                    className={`${controlClass} ds-select`}
-                    disabled={disable}
-                  >
-                    <option value="loves_cars">I love cars</option>
-                    <option value="neutral">Neutral</option>
-                    <option value="appliance">Just transport</option>
-                  </select>
-                </Field>
-
                 <Field label="Driving style">
                   <select
                     name="drivingStyle"
@@ -273,7 +265,33 @@ export default function QuizPage() {
                   </select>
                 </Field>
 
-                <Field label="Budget (optional)">
+                <Field label="Ownership personality">
+                  <select
+                    name="ownership"
+                    defaultValue="neutral"
+                    className={`${controlClass} ds-select`}
+                    disabled={disable}
+                  >
+                    <option value="loves_cars">I love cars</option>
+                    <option value="neutral">Neutral</option>
+                    <option value="appliance">Just transport</option>
+                  </select>
+                </Field>
+
+                <Field label="Budget type">
+                  <select
+                    name="budgetType"
+                    defaultValue="purchase_price"
+                    className={`${controlClass} ds-select`}
+                    disabled={disable}
+                  >
+                    <option value="purchase_price">Overall purchase price</option>
+                    <option value="monthly_hp">Monthly budget (HP / finance)</option>
+                    <option value="monthly_lease">Monthly budget (lease)</option>
+                  </select>
+                </Field>
+
+                 <Field label="Budget (optional)">
                   <input name="budget" placeholder="e.g. R300k" className={controlClass} disabled={disable} />
                 </Field>
 

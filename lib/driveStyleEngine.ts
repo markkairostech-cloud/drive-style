@@ -19,9 +19,10 @@ export type BriefInput = {
   distance: "very_short" | "urban_daily" | "mixed" | "long_distance";
   budget: "tight" | "balanced" | "flexible";
   budgetAmount?: string;
+  budgetType?: "purchase_price" | "monthly_hp" | "monthly_lease";
   ownership: "loves_cars" | "neutral" | "appliance";
   environment: "city" | "suburb" | "rough";
-  preference: "suv" | "sedan" | "none";
+  preference: "suv" | "sedan" | "hatch" | "mpv" | "pickup" | "none";
   drivingStyle: "relaxed" | "balanced" | "enthusiastic" | "heavy_duty";
   comfortSpace?: "compact_ok" | "standard" | "roomy" | "easy_entry";
   comfortNeeds?: Array<"easy_in_out" | "wide_seats" | "rear_legroom" | "big_boot">;
@@ -60,15 +61,20 @@ type Vehicle = {
 
 type TargetCategory = "sedan" | "mid_suv" | "large_suv" | "mpv" | "bakkie";
 
-function parseBudgetAmountToNumber(inputBudgetAmount?: string): number | null {
+function parseBudgetAmountToNumber(inputBudgetAmount?: string, budgetType?: string): number | null {
   const raw = String(inputBudgetAmount || "").trim();
   if (!raw) return null;
 
   const lower = raw.toLowerCase();
+  const type = String(budgetType || "purchase_price").trim().toLowerCase();
   const digits = lower.replace(/[^\d]/g, "");
   if (!digits) return null;
 
   let n = Number(digits);
+  if (type !== "purchase_price") {
+  // rough conversion: monthly → total price estimate
+  n = n * 72;
+}
   if (!Number.isFinite(n) || n <= 0) return null;
 
   if (lower.includes("k") && n < 100000) n = n * 1000;
@@ -176,6 +182,11 @@ function pickFuelNarrative(distance: BriefInput["distance"], fuelPreference?: Br
 }
 
 function pickCategory(input: BriefInput): TargetCategory {
+
+  // Respect explicit body-style preference first
+  if (input.preference === "pickup") return "bakkie";
+  if (input.preference === "mpv") return "mpv";
+
   if (input.drivingStyle === "heavy_duty" || input.environment === "rough") {
     if (input.passengers !== "large_family") return "bakkie";
   }
@@ -193,6 +204,30 @@ function pickCategory(input: BriefInput): TargetCategory {
   }
 
   return "mid_suv";
+}
+
+function getCatalogQueryForCategory(category: TargetCategory) {
+  if (category === "sedan") {
+    return { bodyAnyOf: ["SEDAN"] };
+  }
+
+  if (category === "mid_suv") {
+    return { bodyAnyOf: ["SUV", "CROSSOVER"] };
+  }
+
+  if (category === "large_suv") {
+    return { bodyAnyOf: ["SUV"] };
+  }
+
+  if (category === "mpv") {
+    return { bodyAnyOf: ["MPV"] };
+  }
+
+  if (category === "bakkie") {
+    return { bodyAnyOf: ["PICKUP", "BAKKIE"] };
+  }
+
+  return {};
 }
 
 function getBudgetBands(attitude: BriefInput["budget"]) {
@@ -481,13 +516,12 @@ function shouldAllowPickup(input: BriefInput, category: TargetCategory) {
 function shortlistWithProgressiveFallback(input: BriefInput, category: TargetCategory) {
   const comfortSpace = getComfortSpace(input);
   const needs = getComfortNeeds(input);
-  const customerBudget = parseBudgetAmountToNumber(input.budgetAmount);
+  const customerBudget = parseBudgetAmountToNumber(input.budgetAmount, input.budgetType);
   const target = customerBudget ? Math.round(customerBudget * 0.9) : null;
   const bands = target ? getBudgetBands(input.budget) : [];
 
-  const all = (queryVehicles({}) as Vehicle[]) || [];
-
-  const base = all.filter((v) => {
+  const all = (queryVehicles(getCatalogQueryForCategory(category)) as Vehicle[]) || queryVehicles({});
+    const base = all.filter((v) => {
     if (!shouldAllowPickup(input, category) && isPickup(v)) return false;
     if (!shouldAllowMpv(input, category) && isMpv(v)) return false;
     return true;
@@ -632,7 +666,9 @@ function prettyBodyStyle(v: Vehicle) {
 }
 
 export function generateAdvice(input: BriefInput): Advice {
+  console.log("INPUT PREFERENCE:", input.preference);
   const category = pickCategory(input);
+  console.log("CATEGORY SELECTED:", category);
   const fuelNarrative = pickFuelNarrative(input.distance, input.fuelPreference);
   const { chosen, needs, comfortSpace } = shortlistWithProgressiveFallback(input, category);
 

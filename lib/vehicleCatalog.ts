@@ -49,8 +49,8 @@ export function queryVehicles(q: {
       return false;
     }
     if (q.bodyAnyOf?.length) {
-      const body = String(t.body || "").toUpperCase();
-      if (!q.bodyAnyOf.some((b) => body.includes(b.toUpperCase()))) return false;
+      const bodyStyle = String(v.bodyStyle || "").toUpperCase();
+      if (!q.bodyAnyOf.some((b) => bodyStyle.includes(b.toUpperCase()))) return false;
     }
     return true;
   });

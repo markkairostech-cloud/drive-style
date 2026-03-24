@@ -37,9 +37,9 @@ export async function POST(request: Request) {
     const distanceAllowed = ["very_short", "urban_daily", "mixed", "long_distance"] as const;
     const budgetAllowed = ["tight", "balanced", "flexible"] as const;
     const ownershipAllowed = ["loves_cars", "neutral", "appliance"] as const;
-    const riskAllowed = ["certainty", "risk_ok"] as const;
+    const fuelPreferenceAllowed = ["petrol", "diesel", "hybrid", "none"] as const;
     const environmentAllowed = ["city", "suburb", "rough"] as const;
-    const preferenceAllowed = ["suv", "sedan", "none"] as const;
+    const preferenceAllowed = ["suv", "sedan", "hatch", "mpv", "pickup", "none"] as const;
     const drivingStyleAllowed = ["relaxed", "balanced", "enthusiastic", "heavy_duty"] as const;
 
     const comfortSpaceAllowed = ["compact_ok", "standard", "roomy", "easy_entry"] as const;
@@ -51,15 +51,17 @@ export async function POST(request: Request) {
       distance: oneOf(body?.distance, distanceAllowed, "urban_daily"),
       budget: oneOf(body?.budget, budgetAllowed, "balanced"),
       ownership: oneOf(body?.ownership, ownershipAllowed, "neutral"),
-      risk: oneOf(body?.risk, riskAllowed, "certainty"),
+      
       environment: oneOf(body?.environment, environmentAllowed, "suburb"),
-      preference: oneOf(body?.preference, preferenceAllowed, "suv"),
+     preference: oneOf(body?.preference, preferenceAllowed, "none"),
       drivingStyle: oneOf(body?.drivingStyle, drivingStyleAllowed, "relaxed"),
       budgetAmount: asString(body?.budgetAmount, ""),
+      budgetType: asString(body?.budgetType, "purchase_price"),
 
       // ✅ Comfort & space signals (critical for “roomy” logic)
       comfortSpace: oneOf(body?.comfortSpace, comfortSpaceAllowed, "standard"),
       comfortNeeds: arrayOfAllowed(body?.comfortNeeds, comfortNeedsAllowed),
+      fuelPreference: oneOf(body?.fuelPreference, fuelPreferenceAllowed, "none"),
     };
 
     // ---- Dev-only debug (helps confirm payload is arriving) ----
