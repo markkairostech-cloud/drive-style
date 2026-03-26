@@ -30,10 +30,7 @@ export default function HomePage() {
             alt=""
             className="w-full h-auto"
             style={{
-              /* Make it unmistakably darker + subtler */
-              filter: "brightness(0.52) saturate(0.82) contrast(1.05)",
-
-              /* Left-side feather: fades to nothing on left + top-left + bottom-left */
+              filter: "brightness(0.52) saturate(0.78) contrast(1.03)",
               WebkitMaskImage:
                 "radial-gradient(140% 120% at 90% 50%, black 62%, transparent 92%)," +
                 "linear-gradient(90deg, transparent 0%, black 52%, black 100%)",
@@ -43,14 +40,14 @@ export default function HomePage() {
             }}
           />
 
-          {/* Blue wash overlay to blend into the smoky navy (does NOT affect text) */}
+          {/* Softer teal-charcoal wash for calmer premium feel */}
           <div
             aria-hidden
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(90deg, rgba(4,6,11,1) 0%, rgba(4,6,11,0.82) 30%, rgba(4,6,11,0.25) 62%, rgba(4,6,11,0.0) 78%)," +
-                "linear-gradient(180deg, rgba(4,6,11,0.0) 55%, rgba(4,6,11,0.55) 85%, rgba(4,6,11,0.85) 100%)",
+                "linear-gradient(90deg, rgba(6,10,12,1) 0%, rgba(6,10,12,0.84) 28%, rgba(10,30,30,0.30) 60%, rgba(10,30,30,0.0) 78%)," +
+                "linear-gradient(180deg, rgba(6,10,12,0.0) 55%, rgba(7,20,22,0.52) 85%, rgba(6,10,12,0.82) 100%)",
             }}
           />
         </div>
@@ -106,7 +103,7 @@ export default function HomePage() {
             <div>
               <div className="cine-pill">How it works</div>
               <h2 className="cine-h2 mt-3">
-                Your personal car-buying concierge in <span className="text-sky-200">4</span> steps
+                Your personal car-buying concierge in <span className="text-teal-300">4</span> steps
               </h2>
               <p className="mt-3 text-white/70 max-w-2xl">
                 A short quiz, a clear recommendation, and a shortlist you can act on — without noise.
@@ -139,7 +136,6 @@ export default function HomePage() {
             Start free with your recommendation, then choose the level of support you want.
           </p>
 
-          {/* REPLACED: 4 cards -> 3 cards, stretched evenly */}
           <div className="mt-7 grid grid-cols-1 md:grid-cols-3 gap-4">
             <CineCard className="p-5">
               <button type="button" className="w-full text-left" onClick={() => setSelectedPlan("Silver")}>
@@ -163,23 +159,15 @@ export default function HomePage() {
               <button type="button" className="w-full text-left" onClick={() => setSelectedPlan("Platinum")}>
                 <div className="text-sm font-semibold">Platinum</div>
                 <div className="mt-2 text-sm text-white/70 leading-relaxed">
-                  Optional help coordinating finance and insurance steps.
+                  Finance and insurance guidance, plus a fully supported premium buying journey.
                 </div>
               </button>
             </CineCard>
           </div>
-
-          <div className="mt-10">
-            <Link href="/quiz" className="cine-btn-primary w-full justify-center text-base py-4">
-              See my recommendation <span aria-hidden>→</span>
-            </Link>
-          </div>
         </div>
       </section>
 
-      {/* Engagement modal (replaces placeholder popup) */}
       <EngagementModal open={!!selectedPlan} tier={selectedPlan} onClose={() => setSelectedPlan(null)} />
-
       <Footer />
     </PremiumShell>
   );

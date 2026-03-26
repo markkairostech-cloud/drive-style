@@ -102,18 +102,21 @@ export default function QuizPage() {
   const controlClass = "cine-input text-base sm:text-lg bg-white/5 text-white/90 [color-scheme:dark]";
 
   return (
-    <PremiumShell header={<TopNav ctaLabel="See my recommendation" />}>
-      <section className="cine-container pt-6 pb-14">
-        <div className="max-w-3xl">
-          <h1 className="cine-h1 mt-4">Answer some quick questions please</h1>
+    <PremiumShell header={<TopNav ctaLabel="Back to home" />}>
+      <section className="cine-container pt-8 pb-14">
+        <div className="max-w-2xl">
+          <div className="cine-pill">Vehicle brief</div>
+
+          <h1 className="cine-h1 mt-4">
+            Let’s find the right car <span className="cine-italic-accent">for your life</span>
+          </h1>
+
           <p className="mt-4 text-lg text-white/75 leading-relaxed">
-            A few details about your lifestyle and needs — then you’ll get your shortlist and a simple plan.
+            This takes a couple of minutes. I’ll use your answers to build a shortlist that actually fits how you live and drive.
           </p>
-          <div className="mt-4 text-sm text-white/70">
-            Want more hands-on help?{" "}
-            <Link href="/#services" className="text-sky-200 hover:text-sky-100 transition">
-              View support plans
-            </Link>
+
+          <div className="mt-3 text-base text-white/70">
+            No pressure. No sales. Just a clear recommendation.
           </div>
         </div>
 
@@ -122,37 +125,38 @@ export default function QuizPage() {
             <form onSubmit={onSubmit} className="space-y-10">
               <input name="company" defaultValue="" className="hidden" tabIndex={-1} autoComplete="off" />
 
-              <Section title="Basics" />
+              <Section title="Your situation" hint="Start with how you actually use your car." />
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <Field label="Passengers most of the time">
+                <Field label="Who’s usually in the car?">
                   <select
                     name="passengers"
                     defaultValue="couple"
                     className={`${controlClass} ds-select`}
                     disabled={disable}
                   >
-                    <option value="alone">Mostly alone</option>
-                    <option value="couple">Couple</option>
+                    <option value="alone">Mostly just me</option>
+                    <option value="couple">Me + partner</option>
                     <option value="family">Family (3–4)</option>
                     <option value="large_family">Large family (5+)</option>
                   </select>
                 </Field>
 
-                <Field label="Distance pattern">
+                <Field label="Typical driving pattern">
                   <select
                     name="distance"
                     defaultValue="mixed"
                     className={`${controlClass} ds-select`}
                     disabled={disable}
                   >
-                    <option value="very_short">Very short (&lt; 5 km)</option>
-                    <option value="urban_daily">Urban daily (traffic)</option>
+                    <option value="very_short">Very short trips</option>
+                    <option value="urban_daily">City / traffic daily</option>
                     <option value="mixed">Mixed use</option>
                     <option value="long_distance">Long distance / highway</option>
                   </select>
                 </Field>
 
-                <Field label="Environment">
+                <Field label="Where do you mainly drive?">
                   <select
                     name="environment"
                     defaultValue="suburb"
@@ -160,24 +164,24 @@ export default function QuizPage() {
                     disabled={disable}
                   >
                     <option value="city">City</option>
-                    <option value="suburb">Suburb</option>
+                    <option value="suburb">Suburban</option>
                     <option value="rough">Rural / rough roads</option>
                   </select>
                 </Field>
 
-                <Field label="Body style preference">
+                <Field label="Any body style preference?">
                   <select
                     name="preference"
                     defaultValue="none"
                     className={`${controlClass} ds-select`}
                     disabled={disable}
                   >
+                    <option value="none">No strong preference</option>
                     <option value="suv">SUV / crossover</option>
                     <option value="sedan">Sedan</option>
-                    <option value="hatch">Hatchback / small car</option>
-                    <option value="mpv">MPV / 7-seater</option>
+                    <option value="hatch">Hatchback</option>
+                    <option value="mpv">7-seater / MPV</option>
                     <option value="pickup">Bakkie / pickup</option>
-                    <option value="none">No strong preference</option>
                   </select>
                 </Field>
 
@@ -188,20 +192,19 @@ export default function QuizPage() {
                     className={`${controlClass} ds-select`}
                     disabled={disable}
                   >
-                    <option value="none">No strong preference</option>
+                    <option value="none">No preference</option>
                     <option value="petrol">Petrol</option>
                     <option value="diesel">Diesel</option>
                     <option value="hybrid">Hybrid</option>
                   </select>
                 </Field>
+              </div>
 
-                </div>
-
-              <Section title="Comfort and space" />
+              <Section title="Comfort & space" />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="cine-card cine-card-metal cine-card-glow rounded-2xl p-4">
-                  <div className="text-lg font-semibold">Driver comfort & space</div>
+                  <div className="text-lg font-semibold">Space & driving comfort</div>
                   <div className="mt-4">
                     <select
                       name="comfortSpace"
@@ -210,42 +213,43 @@ export default function QuizPage() {
                       disabled={disable}
                     >
                       <option value="compact_ok">Compact is fine</option>
-                      <option value="standard">Medium / typical</option>
-                      <option value="roomy">Roomy / extra space please</option>
-                      <option value="easy_entry">Easier entry (higher seat / wide opening)</option>
+                      <option value="standard">Standard</option>
+                      <option value="roomy">More space please</option>
+                      <option value="easy_entry">Easy entry (higher seat)</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="cine-card cine-card-metal cine-card-glow rounded-2xl p-4">
-                  <div className="text-lg font-semibold">Comfort extras (optional)</div>
+                  <div className="text-lg font-semibold">Any must-have comfort features?</div>
                   <div className="mt-4 space-y-2 text-base sm:text-lg text-white/80">
                     <Check name="comfortNeeds" value="easy_in_out" disabled={disable}>
-                      Easier to get in/out (higher seat)
+                      Easier entry / exit
                     </Check>
                     <Check name="comfortNeeds" value="wide_seats" disabled={disable}>
-                      Wide seats / more shoulder room
+                      Wider seats
                     </Check>
                     <Check name="comfortNeeds" value="rear_legroom" disabled={disable}>
-                      Extra rear legroom
+                      Rear legroom
                     </Check>
                     <Check name="comfortNeeds" value="big_boot" disabled={disable}>
-                      Big boot space
+                      Large boot
                     </Check>
                   </div>
                 </div>
               </div>
 
-              <Section title="Ownership & budget" hint="How you buy and how you drive." />
+              <Section title="Budget & driving style" hint="How you buy and how you drive." />
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <Field label="Budget attitude">
+                <Field label="Budget mindset">
                   <select
                     name="budgetAttitude"
                     defaultValue="balanced"
                     className={`${controlClass} ds-select`}
                     disabled={disable}
                   >
-                    <option value="tight">Tight</option>
+                    <option value="tight">Keep costs low</option>
                     <option value="balanced">Balanced</option>
                     <option value="flexible">Flexible</option>
                   </select>
@@ -260,21 +264,21 @@ export default function QuizPage() {
                   >
                     <option value="relaxed">Relaxed</option>
                     <option value="balanced">Balanced</option>
-                    <option value="enthusiastic">Enthusiastic</option>
+                    <option value="enthusiastic">Enjoy driving</option>
                     <option value="heavy_duty">Heavy duty / towing</option>
                   </select>
                 </Field>
 
-                <Field label="Ownership personality">
+                <Field label="How do you see cars?">
                   <select
                     name="ownership"
                     defaultValue="neutral"
                     className={`${controlClass} ds-select`}
                     disabled={disable}
                   >
-                    <option value="loves_cars">I love cars</option>
-                    <option value="neutral">Neutral</option>
                     <option value="appliance">Just transport</option>
+                    <option value="neutral">Neutral</option>
+                    <option value="loves_cars">I enjoy cars</option>
                   </select>
                 </Field>
 
@@ -285,48 +289,64 @@ export default function QuizPage() {
                     className={`${controlClass} ds-select`}
                     disabled={disable}
                   >
-                    <option value="purchase_price">Overall purchase price</option>
-                    <option value="monthly_hp">Monthly budget (HP / finance)</option>
-                    <option value="monthly_lease">Monthly budget (lease)</option>
+                    <option value="purchase_price">Total price</option>
+                    <option value="monthly_hp">Monthly (finance)</option>
+                    <option value="monthly_lease">Monthly (lease)</option>
                   </select>
                 </Field>
 
-                 <Field label="Budget (optional)">
-                  <input name="budget" placeholder="e.g. R300k" className={controlClass} disabled={disable} />
+                <Field label="Budget (optional)">
+                  <input
+                    name="budget"
+                    placeholder="e.g. R300k"
+                    className={controlClass}
+                    disabled={disable}
+                  />
                 </Field>
 
-                <Field label="Notes (optional)">
+                <Field label="Anything else I should know?">
                   <input
                     name="message"
-                    placeholder="Must-haves or anything unusual"
+                    placeholder="Optional notes"
                     className={controlClass}
                     disabled={disable}
                   />
                 </Field>
               </div>
 
-              <Section title="Save my shortlist" hint="Optional: we’ll email it to you." />
+              <Section title="Save your shortlist (optional)" hint="We’ll email it to you if you want a copy." />
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <Field label="Email (optional)">
+                <Field label="Email">
                   <input
                     name="email"
                     type="email"
-                    placeholder="If you want your shortlist saved"
+                    placeholder="Only if you want it saved"
                     className={controlClass}
                     disabled={disable}
                   />
                 </Field>
-                <Field label="Your name (optional)">
-                  <input name="name" className={controlClass} disabled={disable} />
+
+                <Field label="Name">
+                  <input
+                    name="name"
+                    className={controlClass}
+                    disabled={disable}
+                  />
                 </Field>
-                <Field label="Phone (optional)">
-                  <input name="phone" className={controlClass} disabled={disable} />
+
+                <Field label="Phone">
+                  <input
+                    name="phone"
+                    className={controlClass}
+                    disabled={disable}
+                  />
                 </Field>
               </div>
 
               <div className="pt-2">
                 <button type="submit" className="cine-btn-primary w-full text-base sm:text-lg" disabled={disable}>
-                  {status === "sending" ? "Generating your recommendation..." : "See my recommendation"}
+                  {status === "sending" ? "Building your recommendation..." : "See my recommendation"}
                   <span aria-hidden>→</span>
                 </button>
 
@@ -336,7 +356,7 @@ export default function QuizPage() {
                   </div>
                 )}
 
-                <div className="mt-6 text-sm text-white/60">© {year} Drive Style • We don’t sell cars — we advise.</div>
+                <div className="mt-6 text-sm text-white/60">© {year} Drive Style</div>
               </div>
             </form>
           </CineCard>

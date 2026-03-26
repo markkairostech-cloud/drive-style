@@ -2,13 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: dark; }
+:root {
+  color-scheme: dark;
+
+  --ds-bg: #04060b;
+  --ds-text: rgba(255,255,255,0.92);
+
+  /* Calm teal palette */
+  --ds-teal-1: rgba(45,212,191,0.65);
+  --ds-teal-2: rgba(20,184,166,0.32);
+  --ds-teal-3: rgba(94,234,212,0.22);
+  --ds-teal-4: rgba(45,212,191,0.18);
+  --ds-teal-5: rgba(94,234,212,0.10);
+  --ds-teal-6: rgba(94,234,212,0.30);
+  --ds-teal-7: rgba(94,234,212,0.45);
+  --ds-teal-8: rgba(94,234,212,0.65);
+  --ds-teal-9: rgba(45,212,191,0.20);
+  --ds-teal-10: rgba(45,212,191,0.14);
+  --ds-teal-11: rgba(45,212,191,0.12);
+  --ds-teal-12: rgba(45,212,191,0.16);
+}
 
 html, body { height: 100%; }
 
 body {
-  background: #04060b;
-  color: rgba(255,255,255,0.92);
+  background: var(--ds-bg);
+  color: var(--ds-text);
 }
 
 /* --- Cinematic system (full glow / metallic) --- */
@@ -26,7 +45,7 @@ body {
     line-height: 1.02;
     text-shadow:
       0 2px 18px rgba(0,0,0,0.60),
-      0 0 26px rgba(56,189,248,0.22);
+      0 0 26px var(--ds-teal-3);
   }
 
   .cine-h2 {
@@ -53,24 +72,24 @@ body {
   /* Metallic sheen + depth */
   .cine-card-metal {
     background:
-      radial-gradient(1000px circle at 20% 10%, rgba(59,130,246,0.28), transparent 46%),
-      radial-gradient(900px circle at 88% 18%, rgba(56,189,248,0.18), transparent 52%),
-      radial-gradient(900px circle at 55% 120%, rgba(99,102,241,0.16), transparent 58%),
+      radial-gradient(1000px circle at 20% 10%, var(--ds-teal-2), transparent 46%),
+      radial-gradient(900px circle at 88% 18%, var(--ds-teal-4), transparent 52%),
+      radial-gradient(900px circle at 55% 120%, rgba(13,148,136,0.14), transparent 58%),
       linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.025));
   }
 
   .cine-card-glow {
     box-shadow:
-      0 70px 240px -150px rgba(59,130,246,1),
+      0 70px 240px -150px rgba(20,184,166,0.85),
       0 0 0 1px rgba(255,255,255,0.06) inset,
-      0 0 0 1px rgba(125,211,252,0.28),
-      0 0 80px rgba(56,189,248,0.10);
+      0 0 0 1px var(--ds-teal-6),
+      0 0 80px var(--ds-teal-5);
   }
 
   .cine-sep {
     @apply h-px w-full;
-    background: linear-gradient(90deg, transparent, rgba(56,189,248,0.55), transparent);
-    box-shadow: 0 0 22px rgba(56,189,248,0.30);
+    background: linear-gradient(90deg, transparent, var(--ds-teal-1), transparent);
+    box-shadow: 0 0 22px var(--ds-teal-6);
   }
 
   .cine-pill {
@@ -78,7 +97,7 @@ body {
     border-color: rgba(255,255,255,0.12);
     background-color: rgba(255,255,255,0.05);
     color: rgba(255,255,255,0.80);
-    box-shadow: 0 0 22px rgba(56,189,248,0.10);
+    box-shadow: 0 0 22px var(--ds-teal-5);
   }
 
   /* Buttons */
@@ -88,13 +107,13 @@ body {
 
   .cine-btn-primary {
     @apply cine-btn border;
-    border-color: rgba(186,230,253,0.35); /* sky-200-ish */
+    border-color: rgba(153,246,228,0.35);
     color: rgba(255,255,255,1);
-    background: linear-gradient(180deg, rgba(56,189,248,0.42), rgba(59,130,246,0.14));
+    background: linear-gradient(180deg, var(--ds-teal-1), var(--ds-teal-10));
     box-shadow:
-      0 40px 120px -80px rgba(59,130,246,1),
+      0 40px 120px -80px rgba(20,184,166,0.90),
       0 0 0 1px rgba(255,255,255,0.06) inset,
-      0 0 36px rgba(56,189,248,0.18);
+      0 0 36px var(--ds-teal-4);
   }
 
   .cine-btn-primary::before {
@@ -111,7 +130,7 @@ body {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(125,211,252,0.25), transparent);
+    background: linear-gradient(90deg, transparent, rgba(94,234,212,0.25), transparent);
     transform: translateX(-60%);
     opacity: 0;
     pointer-events: none;
@@ -120,9 +139,9 @@ body {
   .cine-btn-primary:hover {
     transform: translateY(-2px);
     box-shadow:
-      0 52px 150px -92px rgba(59,130,246,1),
+      0 52px 150px -92px rgba(20,184,166,0.95),
       0 0 0 1px rgba(255,255,255,0.07) inset,
-      0 0 52px rgba(56,189,248,0.22);
+      0 0 52px var(--ds-teal-3);
   }
 
   .cine-btn-primary:hover::after {
@@ -136,7 +155,7 @@ body {
     border-color: rgba(255,255,255,0.22);
     background-color: rgba(255,255,255,0.06);
     color: rgba(255,255,255,0.90);
-    box-shadow: 0 0 26px rgba(56,189,248,0.06);
+    box-shadow: 0 0 26px var(--ds-teal-5);
   }
 
   .cine-btn-secondary:hover {
@@ -157,10 +176,10 @@ body {
   .cine-input::placeholder { color: rgba(255,255,255,0.45); }
 
   .cine-input:focus {
-    border-color: rgba(125,211,252,0.65);
+    border-color: var(--ds-teal-8);
     box-shadow:
-      0 0 0 6px rgba(56,189,248,0.20),
-      0 0 38px rgba(56,189,248,0.14);
+      0 0 0 6px var(--ds-teal-9),
+      0 0 38px var(--ds-teal-10);
   }
 
   /* Option tiles (quiz) */
@@ -171,19 +190,19 @@ body {
   .cine-option:hover {
     transform: translateY(-2px);
     box-shadow:
-      0 70px 240px -150px rgba(59,130,246,1),
+      0 70px 240px -150px rgba(20,184,166,0.85),
       0 0 0 1px rgba(255,255,255,0.06) inset,
-      0 0 0 1px rgba(125,211,252,0.28),
-      0 0 80px rgba(56,189,248,0.12);
+      0 0 0 1px var(--ds-teal-6),
+      0 0 80px var(--ds-teal-11);
   }
 
   .cine-option-selected {
-    border-color: rgba(186,230,253,0.50); /* sky-ish */
+    border-color: rgba(153,246,228,0.50);
     box-shadow:
-      0 85px 280px -175px rgba(59,130,246,1),
+      0 85px 280px -175px rgba(20,184,166,0.90),
       0 0 0 1px rgba(255,255,255,0.06) inset,
-      0 0 0 1px rgba(125,211,252,0.45),
-      0 0 120px rgba(56,189,248,0.16);
+      0 0 0 1px var(--ds-teal-7),
+      0 0 120px var(--ds-teal-12);
   }
 
   /* Hero image blend helper */
@@ -192,7 +211,7 @@ body {
     border-color: rgba(255,255,255,0.12);
     background-color: rgba(255,255,255,0.03);
     box-shadow:
-      0 90px 220px -160px rgba(59,130,246,1),
+      0 90px 220px -160px rgba(20,184,166,0.85),
       0 0 0 1px rgba(255,255,255,0.06) inset;
   }
 }
