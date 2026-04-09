@@ -6,7 +6,6 @@ import PremiumShell from "@/components/PremiumShell";
 import TopNav from "@/components/cinematic/TopNav";
 import CineCard from "@/components/cinematic/CineCard";
 import Footer from "@/components/cinematic/Footer";
-import SubscribeCtas from "@/components/SubscribeCtas";
 import EngagementModal, { PlanTier } from "@/components/EngagementModal";
 
 type Advice = {
@@ -18,7 +17,6 @@ type Advice = {
 };
 
 type LoadState = "loading" | "ready" | "empty";
-type SaveStatus = "idle" | "sending" | "sent" | "error";
 
 const STORAGE = {
   advice: "driveStyleAdvice",
@@ -33,96 +31,236 @@ export default function ResultsPage() {
   const [selectedPlan, setSelectedPlan] = useState<PlanTier | null>(null);
 
   useEffect(() => {
-    const raw = sessionStorage.getItem(STORAGE.advice) || localStorage.getItem(STORAGE.advice);
-    if (!raw) return setLoadState("empty");
-    setAdvice(JSON.parse(raw));
-    setLoadState("ready");
+    const raw =
+      sessionStorage.getItem(STORAGE.advice) || localStorage.getItem(STORAGE.advice);
+
+    if (!raw) {
+      setLoadState("empty");
+      return;
+    }
+
+    try {
+      setAdvice(JSON.parse(raw));
+      setLoadState("ready");
+    } catch {
+      setLoadState("empty");
+    }
   }, []);
 
   const topModels = useMemo(() => (advice?.models || []).slice(0, 3), [advice]);
 
   return (
     <PremiumShell header={<TopNav ctaHref="/quiz" ctaLabel="New brief" />}>
-      <section className="cine-container pt-12 pb-14">
+      <section className="cine-container pt-12 pb-10">
         {loadState === "ready" && advice && (
-          <div className="space-y-6">
+          <div className="space-y-7">
+            {/* HERO / HEADER */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+              <div className="xl:col-span-8">
+                <div className="cine-pill">Your recommendation</div>
+                <h1 className="mt-4 text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight leading-[0.96] text-white max-w-4xl">
+                  Here’s what I’d recommend
+                </h1>
+                <p className="mt-4 text-base sm:text-lg text-white/72 leading-relaxed max-w-2xl">
+                  Based on your answers, these are the strongest matches for your
+                  situation — balanced around fit, budget, and day-to-day usability.
+                </p>
+              </div>
 
-            {/* HEADER */}
-            <div>
-              <div className="cine-pill">Your recommendation</div>
-              <h1 className="cine-h1 mt-4">Here’s what I’d recommend</h1>
-              <p className="mt-3 text-white/70 max-w-2xl">
-                Based on your answers, these are the strongest matches for your situation.
-              </p>
+              <div className="xl:col-span-4">
+                <CineCard className="p-5 border border-teal-300/20 bg-white/[0.02]">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-teal-200/80">
+                    Drive Style summary
+                  </div>
+                  <div className="mt-3 space-y-3 text-sm text-white/72">
+                    <div>
+                      <div className="text-white font-medium">Best next step</div>
+                      <div className="mt-1 text-white/55">
+                        Review your shortlist, then choose the level of support you
+                        want from us.
+                      </div>
+                    </div>
+                    <div className="h-px bg-white/10" />
+                    <div>
+                      <div className="text-white font-medium">What this page does</div>
+                      <div className="mt-1 text-white/55">
+                        It turns your quiz answers into a clear recommendation, with
+                        practical reasoning behind each option.
+                      </div>
+                    </div>
+                  </div>
+                </CineCard>
+              </div>
             </div>
 
-            {/* INSIGHTS */}
-            <CineCard className="p-6">
-              <p className="text-white/80">{advice.intro}</p>
+            {/* INSIGHTS + VERDICT */}
+            <CineCard className="p-6 sm:p-7 border border-white/8 bg-white/[0.02]">
+              <div className="max-w-3xl">
+                <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">
+                  Why these vehicles
+                </div>
+                <p className="mt-4 text-white/80 leading-relaxed">{advice.intro}</p>
+              </div>
 
               <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                {advice.insights.map((i) => (
-                  <CineCard key={i.title} glow={false} className="p-4">
-                    <div className="font-semibold">{i.title}</div>
-                    <div className="text-sm text-white/70 mt-2">{i.text}</div>
+                {advice.insights.map((insight) => (
+                  <CineCard
+                    key={insight.title}
+                    glow={false}
+                    className="p-5 border border-white/6 bg-white/[0.02]"
+                  >
+                    <div className="text-sm uppercase tracking-[0.16em] text-white/45">
+                      {insight.title}
+                    </div>
+                    <div className="mt-3 text-sm text-white/72 leading-relaxed">
+                      {insight.text}
+                    </div>
                   </CineCard>
                 ))}
               </div>
 
               {advice.verdict && (
-                <div className="mt-6 border border-teal-300/30 p-5 rounded-xl bg-teal-500/5">
-                  <div className="font-semibold mb-2">Drive Style Verdict</div>
-                  <div className="text-white/80 text-sm">{advice.verdict}</div>
+                <div className="mt-6 rounded-2xl border border-teal-300/25 bg-teal-300/6 p-5 sm:p-6">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-teal-200/85">
+                    Drive Style verdict
+                  </div>
+                  <div className="mt-3 text-white/88 leading-relaxed">
+                    {advice.verdict}
+                  </div>
                 </div>
               )}
             </CineCard>
 
             {/* SHORTLIST */}
             <div>
-              <h2 className="cine-h2">Your shortlist</h2>
-              <div className="grid gap-4 mt-4">
-                {topModels.map((m, i) => (
-                  <CineCard key={m.name} className="p-5">
-                    <div className="text-sm text-white/60">Option {i + 1}</div>
-                    <div className="text-lg font-semibold mt-1">{m.name}</div>
-                    <div className="text-sm text-white/70 mt-2">{m.why}</div>
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+                <div>
+                  <div className="cine-pill">Shortlist</div>
+                  <h2 className="cine-h2 mt-3">Your strongest vehicle matches</h2>
+                  <p className="mt-3 text-white/68 max-w-2xl">
+                    These are the three options that best fit the needs you described.
+                  </p>
+                </div>
+
+                <Link href="/quiz" className="cine-btn-secondary">
+                  Adjust my brief
+                </Link>
+              </div>
+
+              <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {topModels.map((model, index) => (
+                  <CineCard
+                    key={model.name}
+                    className={`p-0 overflow-hidden h-full ${
+                      index === 0
+                        ? "border border-teal-300/40 bg-white/[0.04] shadow-[0_20px_60px_rgba(20,184,166,0.12)]"
+                        : "border border-white/6 bg-white/[0.02]"
+                    }`}
+                  >
+                    <div className="p-6 h-full flex flex-col">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">
+                            {index === 0 ? "Top recommendation" : `Option ${index + 1}`}
+                          </div>
+                          <div className="mt-3 text-2xl font-semibold tracking-tight text-white">
+                            {model.name}
+                          </div>
+                        </div>
+
+                        {index === 0 ? (
+                          <span className="inline-flex items-center rounded-full border border-teal-300/25 bg-teal-300/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-teal-200">
+                            Best fit
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="mt-5 h-px w-full bg-white/10" />
+
+                      <p className="mt-5 text-sm text-white/72 leading-relaxed">
+                        {model.why}
+                      </p>
+
+                      {typeof model.msrp === "number" ? (
+                        <div className="mt-6 text-sm text-white/55">
+                          Indicative price:{" "}
+                          <span className="text-white/80 font-medium">
+                            R{model.msrp.toLocaleString("en-ZA")}
+                          </span>
+                        </div>
+                      ) : null}
+                    </div>
                   </CineCard>
                 ))}
               </div>
             </div>
 
-            {/* CTA SECTION */}
-            <CineCard className="p-7">
-              <div className="text-white/80">{advice.closing}</div>
+            {/* SUPPORT CTA */}
+            <CineCard className="p-6 sm:p-7 border border-white/8 bg-white/[0.02]">
+              <div className="max-w-3xl">
+                <div className="cine-pill">Next step</div>
+                <h2 className="cine-h2 mt-4">Choose how much support you want</h2>
+                <p className="mt-3 text-white/72 leading-relaxed">{advice.closing}</p>
+              </div>
 
-              <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
-
-                <PlanTile title="Silver" subtitle="More clarity" onSelect={() => setSelectedPlan("Silver")} />
+              <div className="mt-7 grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+                <PlanTile
+                  title="Silver"
+                  subtitle="Sharper guidance, more clarity"
+                  description="A focused support layer for buyers who want better structure and practical next steps."
+                  cta="Continue with Silver"
+                  onSelect={() => setSelectedPlan("Silver")}
+                />
 
                 <PlanTile
                   title="Gold"
-                  subtitle="Most popular choice"
+                  subtitle="More support, less effort"
+                  description="Our most balanced option for buyers who want hands-on guidance without going fully end-to-end."
+                  cta="Continue with Gold"
                   highlight
                   onSelect={() => setSelectedPlan("Gold")}
                 />
 
-                <PlanTile title="Platinum" subtitle="Full premium support" onSelect={() => setSelectedPlan("Platinum")} />
-
+                <PlanTile
+                  title="Platinum"
+                  subtitle="End-to-end premium guidance"
+                  description="For buyers who want the most involved support across choice, finance, insurance, and final decision-making."
+                  cta="Continue with Platinum"
+                  onSelect={() => setSelectedPlan("Platinum")}
+                />
               </div>
             </CineCard>
           </div>
         )}
 
+        {loadState === "loading" && (
+          <CineCard className="p-6 border border-white/8 bg-white/[0.02]">
+            <div className="cine-pill">Loading</div>
+            <h2 className="cine-h2 mt-4">Preparing your recommendation</h2>
+            <p className="mt-3 text-white/70">
+              Just a moment while we load your results.
+            </p>
+          </CineCard>
+        )}
+
         {loadState === "empty" && (
-          <CineCard className="p-6">
-            <h2>No results found</h2>
-            <Link href="/quiz" className="cine-btn-primary mt-4 inline-block">
-              Start again →
+          <CineCard className="p-6 border border-white/8 bg-white/[0.02]">
+            <div className="cine-pill">No results found</div>
+            <h2 className="cine-h2 mt-4">We couldn’t find a saved recommendation</h2>
+            <p className="mt-3 text-white/70 max-w-xl">
+              Start a new brief and we’ll generate a fresh recommendation for you.
+            </p>
+            <Link href="/quiz" className="cine-btn-primary mt-6 inline-flex">
+              Start again <span aria-hidden>→</span>
             </Link>
           </CineCard>
         )}
 
-        <EngagementModal open={!!selectedPlan} tier={selectedPlan} onClose={() => setSelectedPlan(null)} />
+        <EngagementModal
+          open={!!selectedPlan}
+          tier={selectedPlan}
+          onClose={() => setSelectedPlan(null)}
+        />
       </section>
 
       <Footer />
@@ -130,17 +268,18 @@ export default function ResultsPage() {
   );
 }
 
-/* =========================
-   PLAN TILE (Revised)
-   ========================= */
 function PlanTile({
   title,
   subtitle,
+  description,
+  cta,
   onSelect,
   highlight,
 }: {
   title: string;
   subtitle: string;
+  description: string;
+  cta: string;
   onSelect: () => void;
   highlight?: boolean;
 }) {
@@ -148,28 +287,40 @@ function PlanTile({
     <button
       type="button"
       onClick={onSelect}
-      className={`text-left rounded-2xl p-8 transition transform hover:-translate-y-1 ${
+      className={`text-left rounded-2xl p-6 min-h-[250px] flex flex-col transition-transform duration-200 ${
         highlight
-          ? "border border-teal-200/80 bg-gradient-to-b from-teal-300/30 to-teal-500/12 shadow-[0_90px_220px_-80px_rgba(20,184,166,1)] scale-[1.08]"
-          : "border border-teal-300/35 bg-gradient-to-b from-teal-400/12 to-teal-500/06 shadow-[0_55px_150px_-75px_rgba(20,184,166,0.75)] hover:border-teal-300/60 hover:shadow-[0_70px_180px_-70px_rgba(20,184,166,0.9)]"
+          ? "border border-teal-300/30 bg-white/[0.03] shadow-[0_20px_60px_rgba(20,184,166,0.08)] hover:-translate-y-1"
+          : "border border-white/6 bg-white/[0.02] hover:-translate-y-0.5"
       }`}
     >
-      {highlight && (
-        <div className="text-base text-teal-100 font-semibold mb-3">
-          Recommended
+      <div className="min-h-[40px] flex flex-wrap items-center gap-2">
+        {highlight ? (
+          <span className="inline-flex items-center rounded-full border border-teal-300/25 bg-teal-300/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-teal-200">
+            Most popular
+          </span>
+        ) : null}
+        <span
+          className={`text-[10px] sm:text-[11px] uppercase tracking-[0.22em] ${
+            highlight ? "text-teal-200/85" : "text-white/40"
+          }`}
+        >
+          {subtitle}
+        </span>
+      </div>
+
+      <div className="mt-4 flex items-end justify-between gap-3">
+        <div className="text-2xl font-semibold tracking-tight text-white">{title}</div>
+        <div className={highlight ? "text-teal-300 text-lg" : "text-white/30 text-lg"} aria-hidden>
+          →
         </div>
-      )}
-
-      <div className={`mb-2 ${highlight ? "text-base text-teal-100/90" : "text-base text-teal-200/80"}`}>
-        {subtitle}
       </div>
 
-      <div className={`font-semibold text-white ${highlight ? "text-3xl" : "text-2xl"}`}>
-        {title}
-      </div>
+      <div className="mt-5 h-px w-full bg-white/10" />
 
-      <div className={`mt-5 ${highlight ? "text-lg text-white" : "text-lg text-white/90"}`}>
-        Continue with {title} →
+      <p className="mt-5 text-sm text-white/72 leading-relaxed">{description}</p>
+
+      <div className={`mt-auto pt-6 text-sm ${highlight ? "text-teal-200" : "text-white/80"}`}>
+        {cta}
       </div>
     </button>
   );
