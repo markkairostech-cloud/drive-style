@@ -148,10 +148,15 @@ export default function EngagementModal({
 
               <div className="text-right shrink-0">
                 <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">
-                  Secure payment
+                  One-time engagement
                 </div>
+
                 <div className="mt-1 text-3xl sm:text-4xl font-semibold tracking-tight text-white">
-                  R{price}
+                   R{price}
+                </div>
+
+                <div className="mt-2 text-[12px] text-white/50">
+                    No subscription · No hidden fees
                 </div>
               </div>
             </div>
@@ -235,7 +240,9 @@ export default function EngagementModal({
                   className="cine-btn-primary w-full sm:flex-1"
                   disabled={status === "starting"}
                 >
-                  {status === "starting" ? "Redirecting…" : `Continue to secure payment — R${price}`}
+                  {status === "starting"
+                    ? "Redirecting…"
+                    : `Continue with ${tier} — R${price}`}
                   <span aria-hidden>→</span>
                 </button>
               </div>

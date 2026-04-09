@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import PremiumShell from "@/components/PremiumShell";
@@ -82,11 +81,12 @@ export default function QuizPage() {
         const email = String(data.get("email") || "").trim();
         const name = String(data.get("name") || "").trim();
         const phone = String(data.get("phone") || "").trim();
+
         if (email) localStorage.setItem("driveStyleEmail", email);
         if (name) localStorage.setItem("driveStyleName", name);
         if (phone) localStorage.setItem("driveStylePhone", phone);
       } catch {
-        // ignore
+        // ignore storage errors
       }
 
       router.push("/results");
@@ -99,33 +99,87 @@ export default function QuizPage() {
     setStatus("idle");
   }
 
-  const controlClass = "cine-input text-base sm:text-lg bg-white/5 text-white/90 [color-scheme:dark]";
+  const controlClass =
+    "cine-input text-base sm:text-lg bg-white/5 text-white/90 [color-scheme:dark]";
 
   return (
     <PremiumShell header={<TopNav ctaLabel="Back to home" />}>
-      <section className="cine-container pt-8 pb-14">
-        <div className="max-w-2xl">
-          <div className="cine-pill">Vehicle brief</div>
+      <section className="cine-container pt-10 pb-10">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+          <div className="xl:col-span-8">
+            <div className="max-w-3xl">
+              <div className="cine-pill">Vehicle brief</div>
 
-          <h1 className="cine-h1 mt-4">
-            Let’s find the right car <span className="cine-italic-accent">for your life</span>
-          </h1>
+              <h1 className="mt-4 text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight leading-[0.96] text-white max-w-4xl">
+                Let’s find the right car <span className="cine-italic-accent">for your life</span>
+              </h1>
 
-          <p className="mt-4 text-lg text-white/75 leading-relaxed">
-            This takes a couple of minutes. I’ll use your answers to build a shortlist that actually fits how you live and drive.
-          </p>
+              <p className="mt-4 text-base sm:text-lg text-white/75 leading-relaxed max-w-2xl">
+                This takes a couple of minutes. I’ll use your answers to build a shortlist that
+                actually fits how you live, drive, and spend.
+              </p>
 
-          <div className="mt-3 text-base text-white/70">
-            No pressure. No sales. Just a clear recommendation.
+              <div className="mt-4 text-sm sm:text-base text-white/62">
+                No pressure. No dealership noise. Just a clear recommendation.
+              </div>
+            </div>
+          </div>
+
+          <div className="xl:col-span-4">
+            <CineCard className="p-5 border border-teal-300/18 bg-white/[0.02]">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-teal-200/80">
+                What to expect
+              </div>
+
+              <div className="mt-4 space-y-3 text-sm text-white/72">
+                <div>
+                  <div className="text-white font-medium">A short guided brief</div>
+                  <div className="mt-1 text-white/55">
+                    Tell us about your passengers, budget, roads, and preferences.
+                  </div>
+                </div>
+
+                <div className="h-px bg-white/10" />
+
+                <div>
+                  <div className="text-white font-medium">A clear recommendation</div>
+                  <div className="mt-1 text-white/55">
+                    You’ll get a top pick, supporting reasoning, and a shortlist you can act on.
+                  </div>
+                </div>
+
+                <div className="h-px bg-white/10" />
+
+                <div>
+                  <div className="text-white font-medium">Save it if you want</div>
+                  <div className="mt-1 text-white/55">
+                    Contact details are optional unless you want us to save your shortlist.
+                  </div>
+                </div>
+              </div>
+            </CineCard>
           </div>
         </div>
 
-        <div className="mt-10">
-          <CineCard className="p-6">
+        <div className="mt-8">
+          <CineCard className="p-6 sm:p-7 border border-white/8 bg-white/[0.02]">
             <form onSubmit={onSubmit} className="space-y-10">
-              <input name="company" defaultValue="" className="hidden" tabIndex={-1} autoComplete="off" />
+              <input
+                name="company"
+                defaultValue=""
+                className="hidden"
+                tabIndex={-1}
+                autoComplete="off"
+              />
 
-              <Section title="Your situation" hint="Start with how you actually use your car." />
+              <div className="rounded-2xl border border-teal-300/14 bg-teal-300/[0.04] px-4 py-3 text-sm text-white/70">
+                Give your best estimate where needed. You do not need every answer to be perfect.
+              </div>
+
+              <Section
+                title="Your situation"
+                hint="Start with how you actually use your car day to day."
+              />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <Field label="Who’s usually in the car?">
@@ -200,11 +254,19 @@ export default function QuizPage() {
                 </Field>
               </div>
 
-              <Section title="Comfort & space" />
+              <Section
+                title="Comfort & space"
+                hint="Tell us where comfort matters most for you or your passengers."
+              />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div className="cine-card cine-card-metal cine-card-glow rounded-2xl p-4">
-                  <div className="text-lg font-semibold">Space & driving comfort</div>
+                <CineCard glow={false} className="p-5 border border-white/6 bg-white/[0.02]">
+                  <div className="text-lg font-semibold tracking-tight text-white">
+                    Space & driving comfort
+                  </div>
+                  <div className="mt-2 text-sm text-white/55">
+                    Choose the seating height and cabin feel that suits you best.
+                  </div>
                   <div className="mt-4">
                     <select
                       name="comfortSpace"
@@ -218,11 +280,16 @@ export default function QuizPage() {
                       <option value="easy_entry">Easy entry (higher seat)</option>
                     </select>
                   </div>
-                </div>
+                </CineCard>
 
-                <div className="cine-card cine-card-metal cine-card-glow rounded-2xl p-4">
-                  <div className="text-lg font-semibold">Any must-have comfort features?</div>
-                  <div className="mt-4 space-y-2 text-base sm:text-lg text-white/80">
+                <CineCard glow={false} className="p-5 border border-white/6 bg-white/[0.02]">
+                  <div className="text-lg font-semibold tracking-tight text-white">
+                    Must-have comfort features
+                  </div>
+                  <div className="mt-2 text-sm text-white/55">
+                    Optional, but helpful if comfort is a big part of the decision.
+                  </div>
+                  <div className="mt-4 space-y-3 text-base sm:text-lg text-white/80">
                     <Check name="comfortNeeds" value="easy_in_out" disabled={disable}>
                       Easier entry / exit
                     </Check>
@@ -236,10 +303,13 @@ export default function QuizPage() {
                       Large boot
                     </Check>
                   </div>
-                </div>
+                </CineCard>
               </div>
 
-              <Section title="Budget & driving style" hint="How you buy and how you drive." />
+              <Section
+                title="Budget & driving style"
+                hint="How you buy and how you drive both matter to the recommendation."
+              />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <Field label="Budget mindset">
@@ -295,7 +365,10 @@ export default function QuizPage() {
                   </select>
                 </Field>
 
-                <Field label="Budget (optional)">
+                <Field
+                  label="Budget"
+                  helper="Optional. You can enter a rough figure like R300k."
+                >
                   <input
                     name="budget"
                     placeholder="e.g. R300k"
@@ -304,7 +377,10 @@ export default function QuizPage() {
                   />
                 </Field>
 
-                <Field label="Anything else I should know?">
+                <Field
+                  label="Anything else I should know?"
+                  helper="Optional notes that could influence the shortlist."
+                >
                   <input
                     name="message"
                     placeholder="Optional notes"
@@ -314,7 +390,10 @@ export default function QuizPage() {
                 </Field>
               </div>
 
-              <Section title="Save your shortlist (optional)" hint="We’ll email it to you if you want a copy." />
+              <Section
+                title="Save your shortlist"
+                hint="Optional. Add your details only if you want a saved copy or follow-up."
+              />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <Field label="Email">
@@ -328,35 +407,40 @@ export default function QuizPage() {
                 </Field>
 
                 <Field label="Name">
-                  <input
-                    name="name"
-                    className={controlClass}
-                    disabled={disable}
-                  />
+                  <input name="name" className={controlClass} disabled={disable} />
                 </Field>
 
                 <Field label="Phone">
-                  <input
-                    name="phone"
-                    className={controlClass}
-                    disabled={disable}
-                  />
+                  <input name="phone" className={controlClass} disabled={disable} />
                 </Field>
               </div>
 
               <div className="pt-2">
-                <button type="submit" className="cine-btn-primary w-full text-base sm:text-lg" disabled={disable}>
-                  {status === "sending" ? "Building your recommendation..." : "See my recommendation"}
-                  <span aria-hidden>→</span>
-                </button>
+                <div className="max-w-2xl">
+                  <button
+                    type="submit"
+                    className="cine-btn-primary w-full text-base sm:text-lg"
+                    disabled={disable}
+                  >
+                    {status === "sending"
+                      ? "Building your recommendation..."
+                      : "Get my recommendation"}
+                    <span aria-hidden>→</span>
+                  </button>
 
-                {status === "error" && (
-                  <div className="mt-4 rounded-xl border border-red-400/25 bg-red-500/10 p-4 text-sm text-red-100">
-                    Error: {error}
+                  {status === "error" && (
+                    <div className="mt-4 rounded-xl border border-red-400/25 bg-red-500/10 p-4 text-sm text-red-100">
+                      Error: {error}
+                    </div>
+                  )}
+
+                  <div className="mt-4 text-sm text-white/52">
+                    Your recommendation is built from the answers above and shown instantly on the
+                    next page.
                   </div>
-                )}
 
-                <div className="mt-6 text-sm text-white/60">© {year} Drive Style</div>
+                  <div className="mt-6 text-sm text-white/40">© {year} Drive Style</div>
+                </div>
               </div>
             </form>
           </CineCard>
@@ -383,10 +467,12 @@ function Section({ title, hint }: { title: string; hint?: string }) {
   return (
     <div>
       <div className="flex items-center gap-4">
-        <div className="text-xl font-semibold tracking-tight whitespace-nowrap">{title}</div>
+        <div className="text-xl sm:text-2xl font-semibold tracking-tight whitespace-nowrap text-white">
+          {title}
+        </div>
         <div className="cine-sep" />
       </div>
-      {hint ? <div className="mt-1 text-sm text-white/60">{hint}</div> : null}
+      {hint ? <div className="mt-2 text-sm text-white/58">{hint}</div> : null}
     </div>
   );
 }
@@ -402,9 +488,9 @@ function Field({
 }) {
   return (
     <label className="block">
-      <div className="text-lg text-white/90 mb-2">{label}</div>
+      <div className="text-base sm:text-lg text-white/90 mb-2">{label}</div>
       {children}
-      {helper ? <div className="mt-2 text-sm text-white/60">{helper}</div> : null}
+      {helper ? <div className="mt-2 text-sm text-white/55">{helper}</div> : null}
     </label>
   );
 }
@@ -429,7 +515,7 @@ function Check({
         disabled={disabled}
         className="mt-0.5 h-4 w-4 rounded border border-white/25 bg-white/10"
       />
-      <span className="leading-snug">{children}</span>
+      <span className="leading-snug text-white/82">{children}</span>
     </label>
   );
 }

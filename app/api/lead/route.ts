@@ -1,5 +1,6 @@
+import { getSupabase } from "@/lib/supabase";
 import { NextResponse } from "next/server";
-
+console.log("SUPABASE URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
 export async function POST(req: Request) {
   try {
     const url = process.env.DRIVESTYLE_SHEETS_WEBAPP_URL;
@@ -13,6 +14,19 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
+    const supabase = getSupabase();
+    
+    await supabase.from("leads").insert([
+  {
+    name: body.name || null,
+    email: body.email || null,
+    phone: body.phone || null,
+    budget: body.budget || null,
+    budget_type: body.budgetType || null,
+    message: body.message || null,
+    source: body.source || "quiz",
+  },
+]);
 
     // spam trap
 if (body.company) {
