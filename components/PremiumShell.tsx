@@ -83,7 +83,31 @@ export default function PremiumShell({ children, header }: PremiumShellProps) {
 
       {/* Foreground */}
       <div className="relative z-10 min-h-screen">
-        {header ? <div className="cine-header">{header}</div> : null}
+        {header ? (
+          <div className="cine-header">
+            <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center shadow-[0_0_20px_rgba(20,184,166,0.10)]">
+                    <div className="h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-gradient-to-br from-teal-300 to-cyan-500 opacity-90" />
+                  </div>
+
+                  <div className="flex flex-col leading-tight min-w-0">
+                    <span className="text-base sm:text-lg font-semibold tracking-[0.14em] text-white">
+                      DRIVESTYLE
+                    </span>
+                    <span className="text-[11px] sm:text-xs text-white/50 truncate">
+                      Vehicle concierge advisor · South Africa
+                    </span>
+                  </div>
+                </div>
+
+                <div className="shrink-0">{header}</div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         <div className="cine-content">{children}</div>
       </div>
     </main>
