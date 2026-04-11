@@ -40,18 +40,51 @@ export async function POST(request: Request) {
       return out;
     };
 
-    const passengersAllowed = ["alone", "couple", "family", "large_family"] as const;
-    const distanceAllowed = ["very_short", "urban_daily", "mixed", "long_distance"] as const;
+    const passengersAllowed = [
+      "alone",
+      "couple",
+      "family",
+      "large_family",
+    ] as const;
+
+    const distanceAllowed = [
+      "very_short",
+      "urban_daily",
+      "mixed",
+      "long_distance",
+    ] as const;
+
     const budgetAllowed = ["tight", "balanced", "flexible"] as const;
     const ownershipAllowed = ["loves_cars", "neutral", "appliance"] as const;
     const fuelPreferenceAllowed = ["petrol", "diesel", "hybrid", "none"] as const;
     const environmentAllowed = ["city", "suburb", "rough"] as const;
     const preferenceAllowed = ["suv", "sedan", "hatch", "mpv", "pickup", "none"] as const;
-    const drivingStyleAllowed = ["relaxed", "balanced", "enthusiastic", "heavy_duty"] as const;
+    const drivingStyleAllowed = [
+      "relaxed",
+      "balanced",
+      "enthusiastic",
+      "heavy_duty",
+    ] as const;
 
-    const comfortSpaceAllowed = ["compact_ok", "standard", "roomy", "easy_entry"] as const;
-    const comfortNeedsAllowed = ["easy_in_out", "wide_seats", "rear_legroom", "big_boot"] as const;
-    const budgetTypeAllowed = ["purchase_price", "monthly_hp", "monthly_lease"] as const;
+    const comfortSpaceAllowed = [
+      "compact_ok",
+      "standard",
+      "roomy",
+      "easy_entry",
+    ] as const;
+
+    const comfortNeedsAllowed = [
+      "easy_in_out",
+      "wide_seats",
+      "rear_legroom",
+      "big_boot",
+    ] as const;
+
+    const budgetTypeAllowed = [
+      "purchase_price",
+      "monthly_hp",
+      "monthly_lease",
+    ] as const;
 
     const normalized = {
       passengers: oneOf(body?.passengers, passengersAllowed, "couple"),
@@ -77,7 +110,7 @@ export async function POST(request: Request) {
     const { error } = await supabaseAdmin.from("advice").insert([
       {
         email: body?.email || null,
-        lead_id: body?.leadId || null, // ✅ THIS IS THE KEY ADD
+        lead_id: body?.leadId || null,
         quiz_answers: normalized,
         recommendation: advice,
       },
@@ -85,13 +118,17 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error("Advice insert error:", error);
+      return NextResponse.json(
+        { ok: false, error: error.message },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json(advice);
+    return NextResponse.json({ ok: true, advice });
   } catch (error) {
     console.error("Advice generation failed:", error);
     return NextResponse.json(
-      { error: "Advice generation failed." },
+      { ok: false, error: "Advice generation failed." },
       { status: 500 }
     );
   }

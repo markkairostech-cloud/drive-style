@@ -1,5 +1,5 @@
-import { getSupabase } from "@/lib/supabase";
 import { NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function POST(req: Request) {
   try {
@@ -8,7 +8,7 @@ export async function POST(req: Request) {
 
     if (!url || !token) {
       return NextResponse.json(
-        { ok: false, error: "Missing .env.local settings (URL or TOKEN)" },
+        { ok: false, error: "Missing environment variables (URL or TOKEN)" },
         { status: 500 }
       );
     }
@@ -20,9 +20,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     }
 
-    const supabase = getSupabase();
-
-    const { data: insertedLead, error: leadError } = await supabase
+    // ✅ Insert into Supabase using admin client
+    const { data: insertedLead, error: leadError } = await supabaseAdmin
       .from("leads")
       .insert([
         {
@@ -38,10 +37,16 @@ export async function POST(req: Request) {
       .select("id")
       .single();
 
+    // ❗ Proper error handling (this was missing)
     if (leadError) {
       console.error("Lead insert error:", leadError);
+      return NextResponse.json(
+        { ok: false, error: leadError.message },
+        { status: 500 }
+      );
     }
 
+    // ✅ Send to Google Sheets
     const payload = {
       token,
       submittedAt: new Date().toISOString(),
@@ -72,6 +77,8 @@ export async function POST(req: Request) {
       { status: upstream.ok ? 200 : 502 }
     );
   } catch (err: any) {
+    console.error("Lead route error:", err);
+
     return NextResponse.json(
       { ok: false, error: err?.message || "Unknown error" },
       { status: 500 }
