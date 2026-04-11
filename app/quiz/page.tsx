@@ -28,37 +28,54 @@ export default function QuizPage() {
     const data = new FormData(form);
 
     const leadPayload = {
-      name: String(data.get("name") || ""),
-      email: String(data.get("email") || ""),
-      phone: String(data.get("phone") || ""),
-      budget: String(data.get("budget") || ""),
+      name: String(data.get("name") || "").trim(),
+      email: String(data.get("email") || "").trim(),
+      phone: String(data.get("phone") || "").trim(),
+      budget: String(data.get("budget") || "").trim(),
       budgetType: String(data.get("budgetType") || "purchase_price"),
-      message: String(data.get("message") || ""),
+      message: String(data.get("message") || "").trim(),
       company: String(data.get("company") || ""),
       source: "quiz",
     };
 
-    const advicePayload = {
-      passengers: String(data.get("passengers") || "couple"),
-      distance: String(data.get("distance") || "mixed"),
-      budget: String(data.get("budgetAttitude") || "balanced"),
-      budgetAmount: String(data.get("budget") || ""),
-      ownership: String(data.get("ownership") || "neutral"),
-      preference: String(data.get("preference") || "none"),
-      environment: String(data.get("environment") || "suburb"),
-      comfortSpace: String(data.get("comfortSpace") || "standard"),
-      drivingStyle: String(data.get("drivingStyle") || "balanced"),
-      fuelPreference: String(data.get("fuelPreference") || "none"),
-      comfortNeeds: data.getAll("comfortNeeds").map(String),
-    };
+    let leadId: string | null = null;
 
     try {
       if (leadPayload.email || leadPayload.phone || leadPayload.name) {
-        fetch("/api/lead", {
+        const leadRes = await fetch("/api/lead", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(leadPayload),
-        }).catch(() => undefined);
+        });
+
+        const leadJson = await leadRes.json().catch(() => null);
+
+        if (process.env.NODE_ENV !== "production") {
+          console.log("[quiz] lead response:", leadJson);
+        }
+
+        leadId = leadJson?.leadId ?? null;
+      }
+
+      const advicePayload = {
+        email: leadPayload.email,
+        leadId,
+        passengers: String(data.get("passengers") || "couple"),
+        distance: String(data.get("distance") || "mixed"),
+        budget: String(data.get("budgetAttitude") || "balanced"),
+        budgetAmount: String(data.get("budget") || "").trim(),
+        budgetType: String(data.get("budgetType") || "purchase_price"),
+        ownership: String(data.get("ownership") || "neutral"),
+        preference: String(data.get("preference") || "none"),
+        environment: String(data.get("environment") || "suburb"),
+        comfortSpace: String(data.get("comfortSpace") || "standard"),
+        drivingStyle: String(data.get("drivingStyle") || "balanced"),
+        fuelPreference: String(data.get("fuelPreference") || "none"),
+        comfortNeeds: data.getAll("comfortNeeds").map(String),
+      };
+
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[quiz] advice payload:", advicePayload);
       }
 
       const res = await fetch("/api/advice", {
@@ -78,13 +95,10 @@ export default function QuizPage() {
         sessionStorage.setItem("driveStyleAdvice", JSON.stringify(payload));
         localStorage.setItem("driveStyleAdvice", JSON.stringify(payload));
 
-        const email = String(data.get("email") || "").trim();
-        const name = String(data.get("name") || "").trim();
-        const phone = String(data.get("phone") || "").trim();
-
-        if (email) localStorage.setItem("driveStyleEmail", email);
-        if (name) localStorage.setItem("driveStyleName", name);
-        if (phone) localStorage.setItem("driveStylePhone", phone);
+        if (leadPayload.email) localStorage.setItem("driveStyleEmail", leadPayload.email);
+        if (leadPayload.name) localStorage.setItem("driveStyleName", leadPayload.name);
+        if (leadPayload.phone) localStorage.setItem("driveStylePhone", leadPayload.phone);
+        if (leadId) localStorage.setItem("driveStyleLeadId", leadId);
       } catch {
         // ignore storage errors
       }

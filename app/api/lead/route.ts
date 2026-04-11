@@ -1,6 +1,6 @@
 import { getSupabase } from "@/lib/supabase";
 import { NextResponse } from "next/server";
-console.log("SUPABASE URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+
 export async function POST(req: Request) {
   try {
     const url = process.env.DRIVESTYLE_SHEETS_WEBAPP_URL;
@@ -14,25 +14,33 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
+
+    // Spam trap
+    if (body.company) {
+      return NextResponse.json({ ok: true });
+    }
+
     const supabase = getSupabase();
-    
-    await supabase.from("leads").insert([
-  {
-    name: body.name || null,
-    email: body.email || null,
-    phone: body.phone || null,
-    budget: body.budget || null,
-    budget_type: body.budgetType || null,
-    message: body.message || null,
-    source: body.source || "quiz",
-  },
-]);
 
-    // spam trap
-if (body.company) {
-  return NextResponse.json({ ok: true });
-}
+    const { data: insertedLead, error: leadError } = await supabase
+      .from("leads")
+      .insert([
+        {
+          name: body.name || null,
+          email: body.email || null,
+          phone: body.phone || null,
+          budget: body.budget || null,
+          budget_type: body.budgetType || null,
+          message: body.message || null,
+          source: body.source || "quiz",
+        },
+      ])
+      .select("id")
+      .single();
 
+    if (leadError) {
+      console.error("Lead insert error:", leadError);
+    }
 
     const payload = {
       token,
@@ -54,12 +62,15 @@ if (body.company) {
 
     const text = await upstream.text();
 
-    return NextResponse.json({
-      ok: upstream.ok,
-      upstreamStatus: upstream.status,
-      upstreamBody: text,
-    }, { status: upstream.ok ? 200 : 502 });
-
+    return NextResponse.json(
+      {
+        ok: upstream.ok,
+        upstreamStatus: upstream.status,
+        upstreamBody: text,
+        leadId: insertedLead?.id || null,
+      },
+      { status: upstream.ok ? 200 : 502 }
+    );
   } catch (err: any) {
     return NextResponse.json(
       { ok: false, error: err?.message || "Unknown error" },
