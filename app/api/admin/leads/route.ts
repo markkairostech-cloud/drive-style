@@ -6,10 +6,17 @@ export async function GET(request: NextRequest) {
   const q = searchParams.get('q')?.trim() || ''
   const status = searchParams.get('status')?.trim() || ''
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+if (!supabaseUrl || !serviceKey) {
+  return NextResponse.json(
+    { error: 'Missing Supabase environment variables' },
+    { status: 500 }
   )
+}
+
+const supabase = createClient(supabaseUrl, serviceKey)
 
   let query = supabase
     .from('leads')
