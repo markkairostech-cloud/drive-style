@@ -124,7 +124,7 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ ok: true, advice });
+    return NextResponse.json(advice);
   } catch (error) {
     console.error("Advice generation failed:", error);
     return NextResponse.json(
