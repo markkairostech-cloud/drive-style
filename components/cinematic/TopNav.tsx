@@ -3,7 +3,7 @@ import DriveStyleLogo from "./DriveStyleLogo";
 
 export default function TopNav({
   ctaHref = "/quiz",
-  ctaLabel = "See my recommendation",
+  ctaLabel = "See my free recommendation",
 }: {
   ctaHref?: string;
   ctaLabel?: string;

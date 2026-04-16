@@ -37,7 +37,7 @@ export default function HomePage() {
 
               <div className="mt-8 flex flex-col sm:flex-row gap-3">
                 <Link href="/quiz" className="cine-btn-primary">
-                  See my recommendation →
+                  See my free recommendation →
                 </Link>
                 <Link href="#services" className="cine-btn-secondary">
                   Explore services
@@ -97,7 +97,7 @@ export default function HomePage() {
               </p>
             </div>
             <Link href="/quiz" className="cine-btn-primary">
-              See my recommendation →
+              See my free recommendation →
             </Link>
           </div>
 
