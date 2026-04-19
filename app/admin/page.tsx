@@ -45,11 +45,13 @@ type Lead = {
   status?: string | null
   notes?: string | null
   created_at?: string | null
+  updated_at?: string | null 
   advice?: Advice[]
   history?: LeadHistoryItem[]
 }
 
-type StatusFilter = 'all' | 'open' | 'closed'
+type StatusFilter = 'all' | 'just_in' | 'working_on_it' | 'all_done'
+type AdminRole = 'super_admin' | 'notes_only' | null
 
 export default function AdminPage() {
   const [leads, setLeads] = useState<Lead[]>([])
@@ -63,6 +65,7 @@ export default function AdminPage() {
   const [isLoadingLeadDetail, setIsLoadingLeadDetail] = useState(false)
   const [notesDraft, setNotesDraft] = useState('')
   const [isSavingNotes, setIsSavingNotes] = useState(false)
+  const [adminRole, setAdminRole] = useState<AdminRole>(null)
 
   const fetchLeads = async (search: string, status: StatusFilter) => {
     setLoading(true)
@@ -89,7 +92,23 @@ export default function AdminPage() {
       }
 
       const data = await res.json()
-      setLeads(data.leads || [])
+      const sortedLeads = (data.leads || []).sort((a: any, b: any) => {
+        const priority = {
+          just_in: 0,
+          working_on_it: 1,
+          all_done: 2,
+        }
+
+        return (priority[a.status] ?? 99) - (priority[b.status] ?? 99)
+      })
+      
+      console.log('LEADS FROM API', data.leads)
+
+      setLeads(sortedLeads)
+
+      if (data.adminRole) {
+        setAdminRole(data.adminRole)
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -101,13 +120,18 @@ export default function AdminPage() {
     fetchLeads(q, statusFilter)
   }, [q, statusFilter])
 
-  const openCount = useMemo(
-    () => leads.filter((lead) => lead.status === 'open').length,
+  const justInCount = useMemo(
+    () => leads.filter((lead) => lead.status === 'just_in').length,
     [leads]
   )
 
-  const closedCount = useMemo(
-    () => leads.filter((lead) => lead.status === 'closed').length,
+  const workingOnItCount = useMemo(
+    () => leads.filter((lead) => lead.status === 'working_on_it').length,
+    [leads]
+  )
+
+  const allDoneCount = useMemo(
+    () => leads.filter((lead) => lead.status === 'all_done').length,
     [leads]
   )
 
@@ -143,6 +167,10 @@ export default function AdminPage() {
 
       setSelectedLead(fullLead)
       setNotesDraft(fullLead.notes || '')
+
+      if (data.adminRole) {
+        setAdminRole(data.adminRole)
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to load lead details')
     } finally {
@@ -150,7 +178,10 @@ export default function AdminPage() {
     }
   }
 
-  const handleStatusUpdate = async (leadId: string, newStatus: 'open' | 'closed') => {
+  const handleStatusUpdate = async (
+    leadId: string,
+    newStatus: 'just_in' | 'working_on_it' | 'all_done'
+  ) => {
     setIsUpdatingStatus(true)
 
     try {
@@ -176,6 +207,10 @@ export default function AdminPage() {
       setSelectedLead(updatedLead)
       setNotesDraft(updatedLead.notes || '')
 
+      if (data.adminRole) {
+        setAdminRole(data.adminRole)
+      }
+
       setLeads((current) =>
         current.map((lead) =>
           lead.id === updatedLead.id
@@ -183,6 +218,7 @@ export default function AdminPage() {
                 ...lead,
                 status: updatedLead.status,
                 notes: updatedLead.notes,
+                updated_at: updatedLead.updated_at,
               }
             : lead
         )
@@ -190,6 +226,7 @@ export default function AdminPage() {
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to update status')
     } finally {
+      await fetchLeads(q, statusFilter) 
       setIsUpdatingStatus(false)
     }
   }
@@ -222,6 +259,10 @@ export default function AdminPage() {
       setSelectedLead(updatedLead)
       setNotesDraft(updatedLead.notes || '')
 
+      if (data.adminRole) {
+        setAdminRole(data.adminRole)
+      }
+
       setLeads((current) =>
         current.map((lead) =>
           lead.id === updatedLead.id
@@ -246,8 +287,10 @@ export default function AdminPage() {
 
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
         <span>Total: {leads.length}</span>
-        <span>Open: {openCount}</span>
-        <span>Closed: {closedCount}</span>
+        <span>Just in: {justInCount}</span>
+        <span>We’re working on it: {workingOnItCount}</span>
+        <span>All done: {allDoneCount}</span>
+        {adminRole ? <span>Access: {adminRole}</span> : null}
       </div>
 
       <form
@@ -285,8 +328,9 @@ export default function AdminPage() {
           }}
         >
           <option value="all">All</option>
-          <option value="open">Open only</option>
-          <option value="closed">Closed only</option>
+          <option value="just_in">Just in only</option>
+          <option value="working_on_it">We’re working on it only</option>
+          <option value="all_done">All done only</option>
         </select>
 
         <button
@@ -334,7 +378,7 @@ export default function AdminPage() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: '2fr 2fr 1fr 1.5fr',
+              gridTemplateColumns: '2fr 2fr 1fr 1.5fr 1.5fr',
               gap: '1rem',
               padding: '0.9rem 1rem',
               background: '#111',
@@ -346,6 +390,7 @@ export default function AdminPage() {
             <div>Email</div>
             <div>Status</div>
             <div>Created</div>
+            <div>Updated</div>
           </div>
 
           {leads.length === 0 ? (
@@ -359,15 +404,26 @@ export default function AdminPage() {
                 style={{
                   width: '100%',
                   display: 'grid',
-                  gridTemplateColumns: '2fr 2fr 1fr 1.5fr',
+                  gridTemplateColumns: '2fr 2fr 1fr 1.5fr 1.5fr',
                   gap: '1rem',
                   padding: '1rem',
                   border: 'none',
                   borderTop: '1px solid #ddd',
-                  background: '#000',
+                  borderLeft: `4px solid ${
+                    lead.status === 'all_done'
+                      ? '#16a34a'
+                      : lead.status === 'working_on_it'
+                      ? '#f59e0b'
+                      : '#1f6feb'
+                  }`,
+                  background:
+                    lead.status === 'just_in'
+                      ? '#050d1a'
+                      : '#000',
                   color: '#fff',
                   textAlign: 'left',
                   cursor: 'pointer',
+                  transition: 'background 0.2s ease',
                 }}
               >
                 <div>{lead.name || 'Unnamed lead'}</div>
@@ -378,16 +434,30 @@ export default function AdminPage() {
                       display: 'inline-block',
                       padding: '0.25rem 0.5rem',
                       borderRadius: '999px',
-                      background: lead.status === 'closed' ? '#444' : '#1f6feb',
+                      background:
+                        lead.status === 'all_done'
+                          ? '#16a34a'
+                          : lead.status === 'working_on_it'
+                          ? '#f59e0b'
+                          : '#1f6feb',
                       color: '#fff',
                       fontSize: '0.85rem',
                     }}
                   >
-                    {lead.status || 'open'}
+                    {lead.status === 'just_in'
+                      ? 'Just in'
+                      : lead.status === 'working_on_it'
+                      ? 'We’re working on it'
+                      : lead.status === 'all_done'
+                      ? 'All done'
+                      : 'Just in'}
                   </span>
                 </div>
                 <div>
                   {lead.created_at ? new Date(lead.created_at).toLocaleString() : '-'}
+                </div>
+                <div>
+                  {lead.updated_at ? new Date(lead.updated_at).toLocaleString() : '-'}
                 </div>
               </button>
             ))
@@ -473,55 +543,115 @@ export default function AdminPage() {
               </button>
             </div>
 
-            <div
-              style={{
-                marginTop: '1rem',
-                padding: '1rem',
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-              }}
-            >
-              <strong>Status</strong>
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  disabled={isUpdatingStatus || selectedLead.status === 'open'}
-                  onClick={() => handleStatusUpdate(selectedLead.id, 'open')}
+            {adminRole === 'super_admin' ? (
+              <div
+                style={{
+                  marginTop: '1rem',
+                  padding: '1rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                }}
+              >
+                <strong>Status</strong>
+                <div
                   style={{
-                    padding: '0.65rem 1rem',
-                    border: '1px solid #ccc',
-                    borderRadius: '6px',
-                    background: '#fff',
-                    color: '#000',
-                    cursor: 'pointer',
-                    opacity: isUpdatingStatus || selectedLead.status === 'open' ? 0.6 : 1,
+                    display: 'flex',
+                    gap: '0.75rem',
+                    marginTop: '0.75rem',
+                    flexWrap: 'wrap',
                   }}
                 >
-                  Open Lead
-                </button>
+                  <button
+                    type="button"
+                    disabled={isUpdatingStatus || selectedLead.status === 'just_in'}
+                    onClick={() => handleStatusUpdate(selectedLead.id, 'just_in')}
+                    style={{
+                      padding: '0.65rem 1rem',
+                      border: '1px solid #ccc',
+                      borderRadius: '6px',
+                      background: '#fff',
+                      color: '#000',
+                      cursor: 'pointer',
+                      opacity:
+                        isUpdatingStatus || selectedLead.status === 'just_in' ? 0.6 : 1,
+                    }}
+                  >
+                    Just in
+                  </button>
 
-                <button
-                  type="button"
-                  disabled={isUpdatingStatus || selectedLead.status === 'closed'}
-                  onClick={() => handleStatusUpdate(selectedLead.id, 'closed')}
-                  style={{
-                    padding: '0.65rem 1rem',
-                    border: '1px solid #ccc',
-                    borderRadius: '6px',
-                    background: '#fff',
-                    color: '#000',
-                    cursor: 'pointer',
-                    opacity: isUpdatingStatus || selectedLead.status === 'closed' ? 0.6 : 1,
-                  }}
-                >
-                  Close Lead
-                </button>
+                  <button
+                    type="button"
+                    disabled={isUpdatingStatus || selectedLead.status === 'working_on_it'}
+                    onClick={() => handleStatusUpdate(selectedLead.id, 'working_on_it')}
+                    style={{
+                      padding: '0.65rem 1rem',
+                      border: '1px solid #ccc',
+                      borderRadius: '6px',
+                      background: '#fff',
+                      color: '#000',
+                      cursor: 'pointer',
+                      opacity:
+                        isUpdatingStatus || selectedLead.status === 'working_on_it'
+                          ? 0.6
+                          : 1,
+                    }}
+                  >
+                    We’re working on it
+                  </button>
 
-                <span style={{ alignSelf: 'center' }}>
-                  Current: <strong>{selectedLead.status || 'open'}</strong>
-                </span>
+                  <button
+                    type="button"
+                    disabled={isUpdatingStatus || selectedLead.status === 'all_done'}
+                    onClick={() => handleStatusUpdate(selectedLead.id, 'all_done')}
+                    style={{
+                      padding: '0.65rem 1rem',
+                      border: '1px solid #ccc',
+                      borderRadius: '6px',
+                      background: '#fff',
+                      color: '#000',
+                      cursor: 'pointer',
+                      opacity:
+                        isUpdatingStatus || selectedLead.status === 'all_done' ? 0.6 : 1,
+                    }}
+                  >
+                    All done
+                  </button>
+
+                  <span style={{ alignSelf: 'center' }}>
+                    Current:{' '}
+                    <strong>
+                      {selectedLead.status === 'just_in'
+                        ? 'Just in'
+                        : selectedLead.status === 'working_on_it'
+                        ? 'We’re working on it'
+                        : selectedLead.status === 'all_done'
+                        ? 'All done'
+                        : 'Just in'}
+                    </strong>
+                  </span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div
+                style={{
+                  marginTop: '1rem',
+                  padding: '1rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                }}
+              >
+                <strong>Status</strong>
+                <p style={{ marginTop: '0.75rem', marginBottom: 0 }}>
+                  {selectedLead.status === 'just_in'
+                    ? 'Just in'
+                    : selectedLead.status === 'working_on_it'
+                    ? 'We’re working on it'
+                    : selectedLead.status === 'all_done'
+                    ? 'All done'
+                    : 'Just in'}
+                </p>
+              </div>
+            )}
 
             <div
               style={{
@@ -563,8 +693,6 @@ export default function AdminPage() {
                   fontSize: '0.95rem',
                   boxSizing: 'border-box',
                   lineHeight: '1.5',
-
-                  // 👇 fix readability
                   backgroundColor: '#ffffff',
                   color: '#000000',
                 }}

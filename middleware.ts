@@ -1,49 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { updateSession } from '@/lib/supabase-middleware'
 
-export function middleware(request: NextRequest) {
-  if (!request.nextUrl.pathname.startsWith('/admin')) {
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  if (!pathname.startsWith('/admin') && !pathname.startsWith('/api/admin')) {
     return NextResponse.next()
   }
 
-  const auth = request.headers.get('authorization')
-
-  const username = process.env.ADMIN_USERNAME
-  const password = process.env.ADMIN_PASSWORD
-
-  if (!username || !password) {
-    return new NextResponse('Admin auth is not configured', { status: 500 })
+  if (pathname === '/admin/login') {
+    return updateSession(request)
   }
 
-  if (!auth) {
-    return new NextResponse('Authentication required', {
-      status: 401,
-      headers: {
-        'WWW-Authenticate': 'Basic realm="Secure Area"',
-      },
-    })
+  const response = await updateSession(request)
+
+  const hasAccessToken = request.cookies
+    .getAll()
+    .some((cookie) => cookie.name.includes('auth-token'))
+
+  if (!hasAccessToken) {
+    if (pathname.startsWith('/api/admin')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const loginUrl = new URL('/admin/login', request.url)
+    return NextResponse.redirect(loginUrl)
   }
 
-  const [scheme, encoded] = auth.split(' ')
-
-  if (scheme !== 'Basic' || !encoded) {
-    return new NextResponse('Invalid authentication', { status: 401 })
-  }
-
-  const decoded = atob(encoded)
-  const [user, pass] = decoded.split(':')
-
-  if (user === username && pass === password) {
-    return NextResponse.next()
-  }
-
-  return new NextResponse('Invalid credentials', {
-    status: 401,
-    headers: {
-      'WWW-Authenticate': 'Basic realm="Secure Area"',
-    },
-  })
+  return response
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/api/admin/:path*']
+  matcher: ['/admin/:path*', '/api/admin/:path*'],
 }

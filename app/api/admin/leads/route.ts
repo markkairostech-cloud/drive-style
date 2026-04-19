@@ -1,22 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getAdminUser } from '@/lib/admin-auth'
 
 export async function GET(request: NextRequest) {
+  const adminUser = await getAdminUser()
+
+  if (!adminUser) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const { searchParams } = new URL(request.url)
   const q = searchParams.get('q')?.trim() || ''
   const status = searchParams.get('status')?.trim() || ''
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-if (!supabaseUrl || !serviceKey) {
-  return NextResponse.json(
-    { error: 'Missing Supabase environment variables' },
-    { status: 500 }
-  )
-}
+  if (!supabaseUrl || !serviceKey) {
+    return NextResponse.json(
+      { error: 'Missing Supabase environment variables' },
+      { status: 500 }
+    )
+  }
 
-const supabase = createClient(supabaseUrl, serviceKey)
+  const supabase = createClient(supabaseUrl, serviceKey)
 
   let query = supabase
     .from('leads')
@@ -32,6 +39,7 @@ const supabase = createClient(supabaseUrl, serviceKey)
       status,
       notes,
       created_at,
+      updated_at,
       advice!advice_lead_id_fkey (
         id,
         lead_id,
@@ -45,7 +53,11 @@ const supabase = createClient(supabaseUrl, serviceKey)
     query = query.or(`name.ilike.%${q}%,email.ilike.%${q}%`)
   }
 
-  if (status === 'open' || status === 'closed') {
+  if (
+    status === 'just_in' ||
+    status === 'working_on_it' ||
+    status === 'all_done'
+  ) {
     query = query.eq('status', status)
   }
 
@@ -68,5 +80,8 @@ const supabase = createClient(supabaseUrl, serviceKey)
 
   const deduped = Array.from(dedupedMap.values())
 
-  return NextResponse.json({ leads: deduped })
+  return NextResponse.json({
+    leads: deduped,
+    adminRole: adminUser.role,
+  })
 }
