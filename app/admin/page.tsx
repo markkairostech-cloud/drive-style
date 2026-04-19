@@ -92,14 +92,14 @@ export default function AdminPage() {
       }
 
       const data = await res.json()
-      const sortedLeads = (data.leads || []).sort((a: any, b: any) => {
-        const priority = {
+      const sortedLeads = (data.leads || []).sort((a: Lead, b: Lead) => {
+        const priority: Record<string, number> = {
           just_in: 0,
           working_on_it: 1,
           all_done: 2,
         }
 
-        return (priority[a.status] ?? 99) - (priority[b.status] ?? 99)
+        return (priority[a.status || ''] ?? 99) - (priority[b.status || ''] ?? 99)
       })
       
       console.log('LEADS FROM API', data.leads)
