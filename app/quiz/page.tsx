@@ -50,8 +50,8 @@ export default function QuizPage() {
 
         const leadJson = await leadRes.json().catch(() => null);
 
-        if (process.env.NODE_ENV !== "production") {
-          console.log("[quiz] lead response:", leadJson);
+        if (!leadRes.ok) {
+          throw new Error(leadJson?.error || "Lead submission failed");
         }
 
         leadId = leadJson?.leadId ?? null;
