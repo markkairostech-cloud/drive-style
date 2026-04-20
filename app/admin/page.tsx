@@ -45,7 +45,7 @@ type Lead = {
   status?: string | null
   notes?: string | null
   created_at?: string | null
-  updated_at?: string | null 
+  updated_at?: string | null
   advice?: Advice[]
   history?: LeadHistoryItem[]
 }
@@ -66,6 +66,12 @@ export default function AdminPage() {
   const [notesDraft, setNotesDraft] = useState('')
   const [isSavingNotes, setIsSavingNotes] = useState(false)
   const [adminRole, setAdminRole] = useState<AdminRole>(null)
+
+  const [statusChecks, setStatusChecks] = useState({
+    just_in: true,
+    working_on_it: true,
+    all_done: true,
+  })
 
   const fetchLeads = async (search: string, status: StatusFilter) => {
     setLoading(true)
@@ -101,7 +107,7 @@ export default function AdminPage() {
 
         return (priority[a.status || ''] ?? 99) - (priority[b.status || ''] ?? 99)
       })
-      
+
       console.log('LEADS FROM API', data.leads)
 
       setLeads(sortedLeads)
@@ -119,6 +125,18 @@ export default function AdminPage() {
   useEffect(() => {
     fetchLeads(q, statusFilter)
   }, [q, statusFilter])
+
+  const visibleLeads = useMemo(() => {
+    return leads.filter((lead) => {
+      const status = lead.status || 'just_in'
+
+      if (status === 'just_in') return statusChecks.just_in
+      if (status === 'working_on_it') return statusChecks.working_on_it
+      if (status === 'all_done') return statusChecks.all_done
+
+      return statusChecks.just_in
+    })
+  }, [leads, statusChecks])
 
   const justInCount = useMemo(
     () => leads.filter((lead) => lead.status === 'just_in').length,
@@ -144,6 +162,11 @@ export default function AdminPage() {
     setSearchInput('')
     setQ('')
     setStatusFilter('all')
+    setStatusChecks({
+      just_in: true,
+      working_on_it: true,
+      all_done: true,
+    })
   }
 
   const handleOpenLead = async (leadId: string) => {
@@ -226,7 +249,7 @@ export default function AdminPage() {
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to update status')
     } finally {
-      await fetchLeads(q, statusFilter) 
+      await fetchLeads(q, statusFilter)
       setIsUpdatingStatus(false)
     }
   }
@@ -286,7 +309,7 @@ export default function AdminPage() {
       <h1 style={{ marginTop: 0 }}>Admin Dashboard</h1>
 
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-        <span>Total: {leads.length}</span>
+        <span>Total: {visibleLeads.length}</span>
         <span>Just in: {justInCount}</span>
         <span>We’re working on it: {workingOnItCount}</span>
         <span>All done: {allDoneCount}</span>
@@ -316,22 +339,68 @@ export default function AdminPage() {
           }}
         />
 
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+        <label
           style={{
-            padding: '0.65rem 0.75rem',
-            border: '1px solid #ccc',
-            borderRadius: '6px',
-            background: '#fff',
-            color: '#000',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            color: '#fff',
           }}
         >
-          <option value="all">All</option>
-          <option value="just_in">Just in only</option>
-          <option value="working_on_it">We’re working on it only</option>
-          <option value="all_done">All done only</option>
-        </select>
+          <input
+            type="checkbox"
+            checked={statusChecks.just_in}
+            onChange={(e) =>
+              setStatusChecks((current) => ({
+                ...current,
+                just_in: e.target.checked,
+              }))
+            }
+          />
+          Just in
+        </label>
+
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            color: '#fff',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={statusChecks.working_on_it}
+            onChange={(e) =>
+              setStatusChecks((current) => ({
+                ...current,
+                working_on_it: e.target.checked,
+              }))
+            }
+          />
+          We’re working on it
+        </label>
+
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            color: '#fff',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={statusChecks.all_done}
+            onChange={(e) =>
+              setStatusChecks((current) => ({
+                ...current,
+                all_done: e.target.checked,
+              }))
+            }
+          />
+          All done
+        </label>
 
         <button
           type="submit"
@@ -393,10 +462,10 @@ export default function AdminPage() {
             <div>Updated</div>
           </div>
 
-          {leads.length === 0 ? (
+          {visibleLeads.length === 0 ? (
             <div style={{ padding: '1rem' }}>No leads found.</div>
           ) : (
-            leads.map((lead) => (
+            visibleLeads.map((lead) => (
               <button
                 key={lead.id}
                 type="button"
