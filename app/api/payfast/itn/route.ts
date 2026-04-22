@@ -14,21 +14,26 @@ export async function POST(req: Request) {
     const email = params.get("custom_str3");
     const name = params.get("custom_str4");
 
+    // ✅ Only process successful payments
+    if (payment_status !== "COMPLETE") {
+      return new NextResponse("Ignored", { status: 200 });
+    }
+
     const supabase = getSupabaseAdmin();
 
     await supabase.from("payments").upsert(
-        {
-            m_payment_id,
-            tier,
-            name,
-            email,
-            phone,
-            amount,
-            status: payment_status,
-        },
-        {
-            onConflict: "m_payment_id",
-        }
+      {
+        m_payment_id,
+        tier,
+        name,
+        email,
+        phone,
+        amount,
+        status: payment_status,
+      },
+      {
+        onConflict: "m_payment_id",
+      }
     );
 
     console.log("Payment saved:", m_payment_id);
