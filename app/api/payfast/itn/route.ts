@@ -1,13 +1,33 @@
 import { NextResponse } from "next/server";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(req: Request) {
   try {
     const body = await req.text();
+    const params = new URLSearchParams(body);
 
-    console.log("PayFast ITN received:");
-    console.log(body);
+    const payment_status = params.get("payment_status");
+    const m_payment_id = params.get("m_payment_id");
+    const amount = params.get("amount_gross");
+    const tier = params.get("custom_str1");
+    const phone = params.get("custom_str2");
+    const email = params.get("custom_str3");
+    const name = params.get("custom_str4");
 
-    // Always respond 200 OK to PayFast
+    const supabase = getSupabaseAdmin();
+
+    await supabase.from("payments").insert({
+      m_payment_id,
+      tier,
+      name,
+      email,
+      phone,
+      amount,
+      status: payment_status,
+    });
+
+    console.log("Payment saved:", m_payment_id);
+
     return new NextResponse("OK", { status: 200 });
 
   } catch (err: any) {
