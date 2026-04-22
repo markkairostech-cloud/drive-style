@@ -86,12 +86,8 @@ export async function POST(req: Request) {
     const signature = buildSignature(params, passphrase || undefined);
 
     const base = `https://${pfHost(mode)}/eng/process`;
-    const redirectUrl =
-      base +
-      "?" +
-      Object.entries({ ...params, signature })
-        .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
-        .join("&");
+    const query = new URLSearchParams({ ...params, signature }).toString();
+    const redirectUrl = `${base}?${query}`;
 
     return NextResponse.json({ redirectUrl });
   } catch {
