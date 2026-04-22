@@ -16,15 +16,20 @@ export async function POST(req: Request) {
 
     const supabase = getSupabaseAdmin();
 
-    await supabase.from("payments").insert({
-      m_payment_id,
-      tier,
-      name,
-      email,
-      phone,
-      amount,
-      status: payment_status,
-    });
+    await supabase.from("payments").upsert(
+        {
+            m_payment_id,
+            tier,
+            name,
+            email,
+            phone,
+            amount,
+            status: payment_status,
+        },
+        {
+            onConflict: "m_payment_id",
+        }
+    );
 
     console.log("Payment saved:", m_payment_id);
 
