@@ -14,14 +14,22 @@ function pfHost(mode: string | undefined) {
 }
 
 function buildSignature(params: Record<string, string>, passphrase?: string) {
-  const entries = Object.entries(params)
+  const filtered = Object.entries(params)
     .filter(([, v]) => v !== undefined && v !== null && String(v).length > 0)
-    .map(([k, v]) => `${k}=${encodeURIComponent(v).replace(/%20/g, "+")}`);
+    .sort(([a], [b]) => a.localeCompare(b));
 
-  let paramString = entries.join("&");
+  const pairs = filtered.map(
+    ([key, value]) =>
+      `${key}=${encodeURIComponent(value).replace(/%20/g, "+")}`
+  );
+
   if (passphrase) {
-    paramString += `&passphrase=${encodeURIComponent(passphrase).replace(/%20/g, "+")}`;
+    pairs.push(
+      `passphrase=${encodeURIComponent(passphrase).replace(/%20/g, "+")}`
+    );
   }
+
+  const paramString = pairs.join("&");
 
   return crypto.createHash("md5").update(paramString).digest("hex");
 }
