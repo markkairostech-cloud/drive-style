@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     }
 
     const merchant_id = String(process.env.PAYFAST_MERCHANT_ID || "").trim();
-    const merchant_key = String(process.env.PAYFAST_MERCHANT_KEY || "").trim();
+    const merchant_key = String(process.env.PAYFAST_MERCHANTCODE_REAL || "").trim();
     const passphrase = String(process.env.PAYFAST_PASSPHRASE || "").trim();
     const mode = String(process.env.PAYFAST_MODE || "sandbox").trim();
     const siteUrl = String(process.env.NEXT_PUBLIC_SITE_URL || "").trim().replace(/\/$/, "");
