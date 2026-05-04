@@ -13,20 +13,17 @@ function pfHost(mode: string | undefined) {
   return mode === "live" ? "www.payfast.co.za" : "sandbox.payfast.co.za";
 }
 
+function encodePayFastValue(value: string) {
+  return encodeURIComponent(value.trim()).replace(/%20/g, "+");
+}
+
 function buildSignature(params: Record<string, string>, passphrase?: string) {
-  const filtered = Object.entries(params)
-    .filter(([, v]) => v !== undefined && v !== null && String(v).length > 0)
-    .sort(([a], [b]) => a.localeCompare(b));
+  const pairs = Object.entries(params)
+    .filter(([, value]) => value !== undefined && value !== null && String(value).length > 0)
+    .map(([key, value]) => `${key}=${encodePayFastValue(String(value))}`);
 
-  const pairs = filtered.map(
-    ([key, value]) =>
-      `${key}=${encodeURIComponent(value).replace(/%20/g, "+")}`
-  );
-
-  if (passphrase) {
-    pairs.push(
-      `passphrase=${encodeURIComponent(passphrase).replace(/%20/g, "+")}`
-    );
+  if (passphrase && passphrase.trim()) {
+    pairs.push(`passphrase=${encodePayFastValue(passphrase)}`);
   }
 
   const paramString = pairs.join("&");
@@ -37,6 +34,7 @@ function buildSignature(params: Record<string, string>, passphrase?: string) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+
     const tier = body?.tier as PlanTier;
     const name = String(body?.name || "").trim();
     const email = String(body?.email || "").trim().toLowerCase();
@@ -45,15 +43,16 @@ export async function POST(req: Request) {
     if (!tier || !(tier in PLAN_PRICES_ZAR)) {
       return new NextResponse("Invalid tier", { status: 400 });
     }
+
     if (!name || !email || !phone) {
       return new NextResponse("Missing contact details", { status: 400 });
     }
 
-    const merchant_id = process.env.PAYFAST_MERCHANT_ID || "";
-    const merchant_key = process.env.PAYFAST_MERCHANT_KEY || "";
-    const passphrase = process.env.PAYFAST_PASSPHRASE || "";
-    const mode = process.env.PAYFAST_MODE || "sandbox";
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
+    const merchant_id = String(process.env.PAYFAST_MERCHANT_ID || "").trim();
+    const merchant_key = String(process.env.PAYFAST_MERCHANT_KEY || "").trim();
+    const passphrase = String(process.env.PAYFAST_PASSPHRASE || "").trim();
+    const mode = String(process.env.PAYFAST_MODE || "sandbox").trim();
+    const siteUrl = String(process.env.NEXT_PUBLIC_SITE_URL || "").trim().replace(/\/$/, "");
 
     if (!merchant_id || !merchant_key || !siteUrl) {
       return new NextResponse("Server not configured", { status: 500 });
@@ -65,9 +64,15 @@ export async function POST(req: Request) {
       .randomBytes(4)
       .toString("hex")}`;
 
-    const return_url = `${siteUrl}/engagement/success?m_payment_id=${encodeURIComponent(m_payment_id)}`;
-    const cancel_url = `${siteUrl}/engagement/cancel?m_payment_id=${encodeURIComponent(m_payment_id)}`;
-    const notify_url = `${siteUrl}/api/payfast/itn`; // we will build this later (after we wire UI)
+    const return_url = `${siteUrl}/engagement/success?m_payment_id=${encodeURIComponent(
+      m_payment_id
+    )}`;
+
+    const cancel_url = `${siteUrl}/engagement/cancel?m_payment_id=${encodeURIComponent(
+      m_payment_id
+    )}`;
+
+    const notify_url = `${siteUrl}/api/payfast/itn`;
 
     const params: Record<string, string> = {
       merchant_id,
@@ -75,26 +80,27 @@ export async function POST(req: Request) {
       return_url,
       cancel_url,
       notify_url,
-
       m_payment_id,
       amount,
-
       item_name: `Drive Style ${tier}`,
       item_description: `${tier} concierge engagement`,
-
       email_address: email,
       name_first: name,
-
       custom_str1: tier,
       custom_str2: phone,
       custom_str3: email,
       custom_str4: name,
     };
 
-    const signature = buildSignature(params, passphrase || undefined);
+    const signature = passphrase
+      ? buildSignature(params, passphrase)
+      : buildSignature(params);
 
     const base = `https://${pfHost(mode)}/eng/process`;
-    const query = new URLSearchParams({ ...params, signature }).toString();
+    const query = Object.entries({ ...params, signature })
+      .map(([key, value]) => `${key}=${encodePayFastValue(String(value))}`)
+      .join("&");
+
     const redirectUrl = `${base}?${query}`;
 
     return NextResponse.json({ redirectUrl });
