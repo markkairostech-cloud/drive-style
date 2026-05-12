@@ -1,12 +1,14 @@
 // ===============================
-// Drive Style Advisor Engine v4.1
-// Electric fuel preference update
+// Drive Style Advisor Engine v4.2
+// Electric fuel preference + duplicate model-family protection
 //
 // Key changes
 // - Adds electric as a supported fuelPreference.
 // - Scores electric vehicles positively when selected.
 // - Gives EVs a sensible urban/short-trip bias.
 // - Adds electric wording into cost and recommendation explanations.
+// - Prevents duplicate make/model family recommendations.
+//   Example: avoids returning three Toyota Fortuner variants.
 // ===============================
 
 import { queryVehicles, prettyVehicleType } from "./vehicleCatalog";
@@ -90,6 +92,28 @@ function getStableBrand(v: Vehicle): string {
 
   const name = String(v?.name ?? "").trim().toLowerCase();
   return name.split(" ")[0] || "";
+}
+
+function getModelFamily(v: Vehicle): string {
+  const brand = getStableBrand(v);
+  const model = String(v?.model ?? "").trim().toLowerCase();
+
+  if (model) {
+    return model
+      .replace(/\b\d+(\.\d+)?\b/g, "")
+      .replace(/\b(gd|tdi|tsi|vx|xlt|xl|gl|glx|rs|sport|luxury|auto|manual|4x4|awd|fwd|rwd)\b/g, "")
+      .replace(/[^a-z]/g, "")
+      .trim();
+  }
+
+  const name = String(v?.name ?? "").toLowerCase();
+
+  return name
+    .replace(brand, "")
+    .replace(/\b\d+(\.\d+)?\b/g, "")
+    .replace(/\b(gd|tdi|tsi|vx|xlt|xl|gl|glx|rs|sport|luxury|auto|manual|4x4|awd|fwd|rwd)\b/g, "")
+    .replace(/[^a-z]/g, "")
+    .trim();
 }
 
 function getPrice(v: Vehicle): number | null {
@@ -597,15 +621,20 @@ function shortlistWithProgressiveFallback(input: BriefInput, category: TargetCat
     const chosen: Vehicle[] = [];
     const seenBrands = new Set<string>();
     const seenStyles = new Set<string>();
+    const seenModelFamilies = new Set<string>();
 
     for (const v of ranked) {
       const brand = getStableBrand(v);
       const style = getStyleBucket(v);
+      const family = `${brand}_${getModelFamily(v)}`;
+
       if (!brand || seenBrands.has(brand)) continue;
       if (seenStyles.has(style)) continue;
+      if (seenModelFamilies.has(family)) continue;
 
       seenBrands.add(brand);
       seenStyles.add(style);
+      seenModelFamilies.add(family);
       chosen.push(v);
 
       if (chosen.length === 3) break;
@@ -614,9 +643,13 @@ function shortlistWithProgressiveFallback(input: BriefInput, category: TargetCat
     if (chosen.length < 3) {
       for (const v of ranked) {
         const brand = getStableBrand(v);
+        const family = `${brand}_${getModelFamily(v)}`;
+
         if (!brand || seenBrands.has(brand)) continue;
+        if (seenModelFamilies.has(family)) continue;
 
         seenBrands.add(brand);
+        seenModelFamilies.add(family);
         chosen.push(v);
 
         if (chosen.length === 3) break;
@@ -625,8 +658,15 @@ function shortlistWithProgressiveFallback(input: BriefInput, category: TargetCat
 
     if (chosen.length < 3) {
       for (const v of ranked) {
+        const brand = getStableBrand(v);
+        const family = `${brand}_${getModelFamily(v)}`;
+
         if (chosen.includes(v)) continue;
+        if (seenModelFamilies.has(family)) continue;
+
+        if (brand) seenModelFamilies.add(family);
         chosen.push(v);
+
         if (chosen.length === 3) break;
       }
     }
