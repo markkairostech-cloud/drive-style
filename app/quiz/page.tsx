@@ -263,6 +263,7 @@ export default function QuizPage() {
                     <option value="none">No preference</option>
                     <option value="petrol">Petrol</option>
                     <option value="diesel">Diesel</option>
+                    <option value="electric">Electric</option>
                     <option value="hybrid">Hybrid</option>
                   </select>
                 </Field>

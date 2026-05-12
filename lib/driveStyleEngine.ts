@@ -1,15 +1,12 @@
 // ===============================
-// Drive Style Advisor Engine v4.0
-// Structured-data alignment update
+// Drive Style Advisor Engine v4.1
+// Electric fuel preference update
 //
 // Key changes
-// - Uses structured dataset fields directly: bodyStyle, fuelType, drivetrain,
-//   transmission, performance, luxury, fuelEfficiency.
-// - Removes token-heavy body classification from the core scoring path.
-// - Strengthens quiz signals that map cleanly to the dataset.
-// - Keeps deterministic shortlist generation, unique manufacturers,
-//   body-style diversity, and budget-aware ranking.
-// - Excludes pickup/MPV by default unless the use case clearly calls for them.
+// - Adds electric as a supported fuelPreference.
+// - Scores electric vehicles positively when selected.
+// - Gives EVs a sensible urban/short-trip bias.
+// - Adds electric wording into cost and recommendation explanations.
 // ===============================
 
 import { queryVehicles, prettyVehicleType } from "./vehicleCatalog";
@@ -26,7 +23,7 @@ export type BriefInput = {
   drivingStyle: "relaxed" | "balanced" | "enthusiastic" | "heavy_duty";
   comfortSpace?: "compact_ok" | "standard" | "roomy" | "easy_entry";
   comfortNeeds?: Array<"easy_in_out" | "wide_seats" | "rear_legroom" | "big_boot">;
-  fuelPreference?: "petrol" | "diesel" | "hybrid" | "none";
+  fuelPreference?: "petrol" | "diesel" | "hybrid" | "electric" | "none";
 };
 
 export type Insight = {
@@ -71,10 +68,12 @@ function parseBudgetAmountToNumber(inputBudgetAmount?: string, budgetType?: stri
   if (!digits) return null;
 
   let n = Number(digits);
+
   if (type !== "purchase_price") {
-  // rough conversion: monthly → total price estimate
-  n = n * 72;
-}
+    // rough conversion: monthly → total price estimate
+    n = n * 72;
+  }
+
   if (!Number.isFinite(n) || n <= 0) return null;
 
   if (lower.includes("k") && n < 100000) n = n * 1000;
@@ -157,6 +156,11 @@ function is4x4ish(v: Vehicle): boolean {
   return drive === "4x4" || drive === "all-wheel";
 }
 
+function isElectric(v: Vehicle): boolean {
+  const fuel = normFuelType(v);
+  return fuel === "electric" || fuel === "ev";
+}
+
 function getComfortSpace(input: BriefInput): "compact_ok" | "standard" | "roomy" | "easy_entry" {
   const v = input.comfortSpace;
   if (v === "compact_ok" || v === "standard" || v === "roomy" || v === "easy_entry") return v;
@@ -166,10 +170,15 @@ function getComfortSpace(input: BriefInput): "compact_ok" | "standard" | "roomy"
 function getComfortNeeds(input: BriefInput): Array<"easy_in_out" | "wide_seats" | "rear_legroom" | "big_boot"> {
   const raw = input.comfortNeeds;
   if (!Array.isArray(raw)) return [];
+
   const set = new Set<"easy_in_out" | "wide_seats" | "rear_legroom" | "big_boot">();
+
   for (const x of raw) {
-    if (x === "easy_in_out" || x === "wide_seats" || x === "rear_legroom" || x === "big_boot") set.add(x);
+    if (x === "easy_in_out" || x === "wide_seats" || x === "rear_legroom" || x === "big_boot") {
+      set.add(x);
+    }
   }
+
   return Array.from(set);
 }
 
@@ -182,7 +191,6 @@ function pickFuelNarrative(distance: BriefInput["distance"], fuelPreference?: Br
 }
 
 function pickCategory(input: BriefInput): TargetCategory {
-
   // Respect explicit body-style preference first
   if (input.preference === "pickup") return "bakkie";
   if (input.preference === "mpv") return "mpv";
@@ -341,18 +349,21 @@ function scoreBasicFit(v: Vehicle, input: BriefInput, category: TargetCategory) 
   // Environment
   if (input.environment === "city") {
     if (isHatch(v) || isSedan(v)) s += 2;
+    if (isElectric(v)) s += 3;
     if (isPickup(v)) s -= 5;
   }
 
   if (input.environment === "suburb") {
     if (isSuv(v)) s += 2;
     if (isSedan(v)) s += 1;
+    if (isElectric(v)) s += 1;
   }
 
   if (input.environment === "rough") {
     if (isPickup(v)) s += 6;
     if (isSuv(v)) s += 4;
     if (is4x4ish(v)) s += 4;
+    if (isElectric(v)) s -= 3;
     if (isSedan(v)) s -= 4;
     if (isHatch(v)) s -= 6;
   }
@@ -360,12 +371,14 @@ function scoreBasicFit(v: Vehicle, input: BriefInput, category: TargetCategory) 
   // Distance -> fuel type + efficiency
   if (input.distance === "very_short") {
     if (fuelType === "petrol") s += 3;
+    if (isElectric(v)) s += 5;
     if (fuelType === "diesel") s -= 4;
     if (isFuelEfficient(v)) s += 2;
   }
 
   if (input.distance === "urban_daily") {
     if (fuelType === "hybrid" || fuelType === "petrol") s += 2;
+    if (isElectric(v)) s += 5;
     if (fuelType === "diesel") s -= 2;
     if (isFuelEfficient(v)) s += 3;
     if (isPickup(v)) s -= 4;
@@ -373,12 +386,14 @@ function scoreBasicFit(v: Vehicle, input: BriefInput, category: TargetCategory) 
 
   if (input.distance === "mixed") {
     if (fuelType === "hybrid") s += 4;
+    if (isElectric(v)) s += 2;
     if (fuelType === "petrol") s += 1;
     if (isFuelEfficient(v)) s += 2;
   }
 
   if (input.distance === "long_distance") {
     if (fuelType === "diesel") s += 5;
+    if (isElectric(v)) s -= 2;
     if (isFuelEfficient(v)) s += 2;
     if (isSedan(v) || isSuv(v)) s += 1;
   }
@@ -397,6 +412,16 @@ function scoreBasicFit(v: Vehicle, input: BriefInput, category: TargetCategory) 
   if (input.fuelPreference === "hybrid") {
     if (fuelType === "hybrid") s += 8;
     else s -= 2;
+  }
+
+  if (input.fuelPreference === "electric") {
+    if (isElectric(v)) s += 10;
+    else if (fuelType === "hybrid") s += 2;
+    else s -= 3;
+
+    if (input.distance === "very_short" || input.distance === "urban_daily") s += 2;
+    if (input.distance === "long_distance") s -= 2;
+    if (input.environment === "rough" || input.drivingStyle === "heavy_duty") s -= 3;
   }
 
   // Comfort / practicality
@@ -454,6 +479,7 @@ function scoreBasicFit(v: Vehicle, input: BriefInput, category: TargetCategory) 
   if (input.drivingStyle === "enthusiastic") {
     if (isPerformance(v)) s += 6;
     if (transmission === "manual") s += 1;
+    if (isElectric(v)) s += 2;
     if (isMpv(v)) s -= 2;
   }
 
@@ -461,16 +487,18 @@ function scoreBasicFit(v: Vehicle, input: BriefInput, category: TargetCategory) 
     if (isPickup(v)) s += 8;
     if (is4x4ish(v)) s += 5;
     if (fuelType === "diesel") s += 2;
+    if (isElectric(v)) s -= 4;
   }
 
   // Ownership personality
   if (input.ownership === "loves_cars") {
     if (isPerformance(v)) s += 3;
     if (isLuxury(v)) s += 2;
+    if (isElectric(v)) s += 1;
   }
 
   if (input.ownership === "appliance") {
-    if (isFuelEfficient(v)) s += 3;
+    if (isFuelEfficient(v) || isElectric(v)) s += 3;
     if (!isLuxury(v)) s += 1;
     if (isPerformance(v)) s -= 3;
   }
@@ -500,6 +528,7 @@ function sortByScoreThenBudgetDistance(items: Vehicle[], scoreMap: Map<string, n
 
 function shouldAllowMpv(input: BriefInput, category: TargetCategory) {
   const needs = getComfortNeeds(input);
+
   return (
     category === "mpv" ||
     input.passengers === "large_family" ||
@@ -521,7 +550,8 @@ function shortlistWithProgressiveFallback(input: BriefInput, category: TargetCat
   const bands = target ? getBudgetBands(input.budget) : [];
 
   const all = (queryVehicles(getCatalogQueryForCategory(category)) as Vehicle[]) || queryVehicles({});
-    const base = all.filter((v) => {
+
+  const base = all.filter((v) => {
     if (!shouldAllowPickup(input, category) && isPickup(v)) return false;
     if (!shouldAllowMpv(input, category) && isMpv(v)) return false;
     return true;
@@ -610,6 +640,7 @@ function shortlistWithProgressiveFallback(input: BriefInput, category: TargetCat
       const chosen = rankAndTake(set);
       if (chosen.length) return { chosen, needs, comfortSpace };
     }
+
     return { chosen: [], needs, comfortSpace };
   }
 
@@ -639,8 +670,16 @@ function buildWhy(v: Vehicle, input: BriefInput, comfortSpace: string, needs: st
   if (isPickup(v)) bits.push("capability-first body");
 
   const fuelType = normFuelType(v);
-  if (input.fuelPreference !== "none" && input.fuelPreference === fuelType) bits.push(`${fuelType} match`);
-  else if (isFuelEfficient(v)) bits.push("good efficiency bias");
+
+  if (input.fuelPreference !== "none" && input.fuelPreference === "electric" && isElectric(v)) {
+    bits.push("electric match");
+  } else if (input.fuelPreference !== "none" && input.fuelPreference === fuelType) {
+    bits.push(`${fuelType} match`);
+  } else if (isElectric(v)) {
+    bits.push("electric efficiency");
+  } else if (isFuelEfficient(v)) {
+    bits.push("good efficiency bias");
+  }
 
   if (comfortSpace === "roomy" && (isSuv(v) || isMpv(v) || isLargeSuv(v))) bits.push("roomier fit");
   if (comfortSpace === "easy_entry" && (isSuv(v) || isMpv(v) || isPickup(v))) bits.push("easier entry");
@@ -650,11 +689,13 @@ function buildWhy(v: Vehicle, input: BriefInput, comfortSpace: string, needs: st
 
   const cleaned = Array.from(new Set(bits)).slice(0, 2);
   if (!cleaned.length) return type;
+
   return `${type} — ${cleaned.join(" • ")}`;
 }
 
 function prettyBodyStyle(v: Vehicle) {
   const body = normBodyStyle(v);
+
   if (body === "crossover") return "Crossover";
   if (body === "suv_mid") return "Mid-size SUV";
   if (body === "suv_large") return "Large SUV";
@@ -662,13 +703,17 @@ function prettyBodyStyle(v: Vehicle) {
   if (body === "pickup") return "Pickup / bakkie";
   if (body === "sedan") return "Sedan";
   if (body === "hatchback") return "Hatchback";
+
   return "Vehicle";
 }
 
 export function generateAdvice(input: BriefInput): Advice {
   console.log("INPUT PREFERENCE:", input.preference);
+
   const category = pickCategory(input);
+
   console.log("CATEGORY SELECTED:", category);
+
   const fuelNarrative = pickFuelNarrative(input.distance, input.fuelPreference);
   const { chosen, needs, comfortSpace } = shortlistWithProgressiveFallback(input, category);
 
@@ -687,7 +732,9 @@ export function generateAdvice(input: BriefInput): Advice {
       : "Your answers point toward a capable pickup / bakkie-style shortlist — the use case is asking for durability and rough-road confidence.";
 
   const costText =
-    fuelNarrative === "diesel"
+    fuelNarrative === "electric"
+      ? "Electric is favoured here because your preference points toward lower running costs and a more modern ownership experience, provided charging access suits your routine."
+      : fuelNarrative === "diesel"
       ? "Diesel is favoured here because your use leans longer-distance or more capability-focused, where relaxed cruising and range matter more."
       : fuelNarrative === "hybrid"
       ? "Hybrid is favoured here because your use pattern suits efficiency gains without forcing a big change in routine."
@@ -702,6 +749,8 @@ export function generateAdvice(input: BriefInput): Advice {
       ? "Because capability matters more than novelty here, the shortlist gives more credit to durability, drivetrain confidence, and working ability."
       : input.ownership === "appliance"
       ? "Because you want transport more than theatre, the shortlist leans toward simpler, easier ownership."
+      : input.fuelPreference === "electric"
+      ? "Because you’re open to electric ownership, the shortlist gives more credit to vehicles that suit predictable routines and charging-friendly use."
       : "Because this needs to work in real life first, the shortlist is biased toward sensible everyday fit rather than novelty.";
 
   const insights: Insight[] = [
@@ -726,6 +775,8 @@ export function generateAdvice(input: BriefInput): Advice {
       ? `${verdictBase} I’m also keeping the shortlist biased away from small hatchback-style options.`
       : comfortSpace === "easy_entry"
       ? `${verdictBase} I’m also biasing the shortlist toward easier entry and a higher seating position.`
+      : input.fuelPreference === "electric"
+      ? `${verdictBase} Because you selected electric, I’m also giving extra weight to EV-friendly use cases rather than treating it as a generic fuel choice.`
       : verdictBase;
 
   const models = chosen.map((v) => ({
@@ -735,7 +786,9 @@ export function generateAdvice(input: BriefInput): Advice {
   }));
 
   const closing =
-    comfortSpace === "roomy"
+    input.fuelPreference === "electric"
+      ? "Want me to refine this further around EV running costs, charging practicality, and best-value electric options?"
+      : comfortSpace === "roomy"
       ? "Want me to refine this further toward the most spacious options, or tighten it around best-value picks?"
       : comfortSpace === "easy_entry"
       ? "Want me to refine this even further around easier access and higher seating?"
