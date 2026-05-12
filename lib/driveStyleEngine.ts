@@ -1,6 +1,6 @@
 // ===============================
-// Drive Style Advisor Engine v4.2
-// Electric fuel preference + duplicate model-family protection
+// Drive Style Advisor Engine v4.3
+// Electric fuel preference + smarter duplicate protection
 //
 // Key changes
 // - Adds electric as a supported fuelPreference.
@@ -8,7 +8,7 @@
 // - Gives EVs a sensible urban/short-trip bias.
 // - Adds electric wording into cost and recommendation explanations.
 // - Prevents duplicate make/model family recommendations.
-//   Example: avoids returning three Toyota Fortuner variants.
+// - Still fills 3 recommendation slots by progressively relaxing brand/style rules.
 // ===============================
 
 import { queryVehicles, prettyVehicleType } from "./vehicleCatalog";
@@ -98,22 +98,21 @@ function getModelFamily(v: Vehicle): string {
   const brand = getStableBrand(v);
   const model = String(v?.model ?? "").trim().toLowerCase();
 
-  if (model) {
-    return model
-      .replace(/\b\d+(\.\d+)?\b/g, "")
-      .replace(/\b(gd|tdi|tsi|vx|xlt|xl|gl|glx|rs|sport|luxury|auto|manual|4x4|awd|fwd|rwd)\b/g, "")
-      .replace(/[^a-z]/g, "")
-      .trim();
-  }
+  const source = model || String(v?.name ?? "").toLowerCase().replace(brand, "");
 
-  const name = String(v?.name ?? "").toLowerCase();
-
-  return name
-    .replace(brand, "")
+  return source
     .replace(/\b\d+(\.\d+)?\b/g, "")
-    .replace(/\b(gd|tdi|tsi|vx|xlt|xl|gl|glx|rs|sport|luxury|auto|manual|4x4|awd|fwd|rwd)\b/g, "")
+    .replace(/\b(gd|tdi|tsi|vx|xlt|xl|gl|glx|rs|sport|luxury|auto|manual|4x4|awd|fwd|rwd|at|mt|cvt)\b/g, "")
     .replace(/[^a-z]/g, "")
     .trim();
+}
+
+function getModelFamilyKey(v: Vehicle): string {
+  const brand = getStableBrand(v);
+  const family = getModelFamily(v);
+
+  if (!brand && !family) return getStableId(v);
+  return `${brand}_${family || getStableId(v)}`;
 }
 
 function getPrice(v: Vehicle): number | null {
@@ -215,7 +214,6 @@ function pickFuelNarrative(distance: BriefInput["distance"], fuelPreference?: Br
 }
 
 function pickCategory(input: BriefInput): TargetCategory {
-  // Respect explicit body-style preference first
   if (input.preference === "pickup") return "bakkie";
   if (input.preference === "mpv") return "mpv";
 
@@ -333,7 +331,6 @@ function scoreBasicFit(v: Vehicle, input: BriefInput, category: TargetCategory) 
 
   s += scoreCategoryFit(v, category);
 
-  // Passengers
   if (input.passengers === "alone") {
     if (isHatch(v)) s += 3;
     if (isSedan(v)) s += 2;
@@ -357,7 +354,6 @@ function scoreBasicFit(v: Vehicle, input: BriefInput, category: TargetCategory) 
     if (!isMpv(v) && !isLargeSuv(v)) s -= 8;
   }
 
-  // Body style preference
   if (input.preference === "suv") {
     if (isSuv(v)) s += 5;
     if (isSedan(v)) s -= 2;
@@ -370,7 +366,6 @@ function scoreBasicFit(v: Vehicle, input: BriefInput, category: TargetCategory) 
     if (isPickup(v)) s -= 5;
   }
 
-  // Environment
   if (input.environment === "city") {
     if (isHatch(v) || isSedan(v)) s += 2;
     if (isElectric(v)) s += 3;
@@ -392,7 +387,6 @@ function scoreBasicFit(v: Vehicle, input: BriefInput, category: TargetCategory) 
     if (isHatch(v)) s -= 6;
   }
 
-  // Distance -> fuel type + efficiency
   if (input.distance === "very_short") {
     if (fuelType === "petrol") s += 3;
     if (isElectric(v)) s += 5;
@@ -422,7 +416,6 @@ function scoreBasicFit(v: Vehicle, input: BriefInput, category: TargetCategory) 
     if (isSedan(v) || isSuv(v)) s += 1;
   }
 
-  // Explicit fuel preference
   if (input.fuelPreference === "petrol") {
     if (fuelType === "petrol") s += 6;
     else s -= 2;
@@ -448,7 +441,6 @@ function scoreBasicFit(v: Vehicle, input: BriefInput, category: TargetCategory) 
     if (input.environment === "rough" || input.drivingStyle === "heavy_duty") s -= 3;
   }
 
-  // Comfort / practicality
   if (comfortSpace === "compact_ok") {
     if (isHatch(v)) s += 4;
     if (isMpv(v) || isPickup(v)) s -= 2;
@@ -490,7 +482,6 @@ function scoreBasicFit(v: Vehicle, input: BriefInput, category: TargetCategory) 
     if (isHatch(v)) s -= 1;
   }
 
-  // Driving style -> performance + capability
   if (input.drivingStyle === "relaxed") {
     if (!isPerformance(v)) s += 2;
     if (isPerformance(v)) s -= 3;
@@ -514,7 +505,6 @@ function scoreBasicFit(v: Vehicle, input: BriefInput, category: TargetCategory) 
     if (isElectric(v)) s -= 4;
   }
 
-  // Ownership personality
   if (input.ownership === "loves_cars") {
     if (isPerformance(v)) s += 3;
     if (isLuxury(v)) s += 2;
@@ -623,58 +613,49 @@ function shortlistWithProgressiveFallback(input: BriefInput, category: TargetCat
     const seenStyles = new Set<string>();
     const seenModelFamilies = new Set<string>();
 
-    for (const v of ranked) {
+    function tryAdd(v: Vehicle, rules: { uniqueBrand: boolean; uniqueStyle: boolean }) {
       const brand = getStableBrand(v);
       const style = getStyleBucket(v);
-      const family = `${brand}_${getModelFamily(v)}`;
+      const family = getModelFamilyKey(v);
 
-      if (!brand || seenBrands.has(brand)) continue;
-      if (seenStyles.has(style)) continue;
-      if (seenModelFamilies.has(family)) continue;
+      if (chosen.includes(v)) return false;
+      if (seenModelFamilies.has(family)) return false;
+      if (rules.uniqueBrand && brand && seenBrands.has(brand)) return false;
+      if (rules.uniqueStyle && seenStyles.has(style)) return false;
 
-      seenBrands.add(brand);
+      if (brand) seenBrands.add(brand);
       seenStyles.add(style);
       seenModelFamilies.add(family);
       chosen.push(v);
 
-      if (chosen.length === 3) break;
+      return true;
     }
 
-    if (chosen.length < 3) {
-      for (const v of ranked) {
-        const brand = getStableBrand(v);
-        const family = `${brand}_${getModelFamily(v)}`;
-
-        if (!brand || seenBrands.has(brand)) continue;
-        if (seenModelFamilies.has(family)) continue;
-
-        seenBrands.add(brand);
-        seenModelFamilies.add(family);
-        chosen.push(v);
-
-        if (chosen.length === 3) break;
-      }
+    for (const v of ranked) {
+      tryAdd(v, { uniqueBrand: true, uniqueStyle: true });
+      if (chosen.length === 3) return chosen;
     }
 
-    if (chosen.length < 3) {
-      for (const v of ranked) {
-        const brand = getStableBrand(v);
-        const family = `${brand}_${getModelFamily(v)}`;
+    for (const v of ranked) {
+      tryAdd(v, { uniqueBrand: true, uniqueStyle: false });
+      if (chosen.length === 3) return chosen;
+    }
 
-        if (chosen.includes(v)) continue;
-        if (seenModelFamilies.has(family)) continue;
-
-        if (brand) seenModelFamilies.add(family);
-        chosen.push(v);
-
-        if (chosen.length === 3) break;
-      }
+    for (const v of ranked) {
+      tryAdd(v, { uniqueBrand: false, uniqueStyle: false });
+      if (chosen.length === 3) return chosen;
     }
 
     return chosen;
   }
 
   if (!target) {
+    for (const set of sets) {
+      if (!set.length) continue;
+      const chosen = rankAndTake(set);
+      if (chosen.length >= 3) return { chosen, needs, comfortSpace };
+    }
+
     for (const set of sets) {
       if (!set.length) continue;
       const chosen = rankAndTake(set);
@@ -690,9 +671,15 @@ function shortlistWithProgressiveFallback(input: BriefInput, category: TargetCat
     for (const band of bands) {
       const { inRange } = applyBudgetBand(set, target, band);
       const chosen = rankAndTake(inRange);
-      if (chosen.length) return { chosen, needs, comfortSpace };
+      if (chosen.length >= 3) return { chosen, needs, comfortSpace };
     }
 
+    const chosen = rankAndTake(set);
+    if (chosen.length >= 3) return { chosen, needs, comfortSpace };
+  }
+
+  for (const set of sets) {
+    if (!set.length) continue;
     const chosen = rankAndTake(set);
     if (chosen.length) return { chosen, needs, comfortSpace };
   }
