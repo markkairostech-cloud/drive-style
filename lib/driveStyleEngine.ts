@@ -24,7 +24,7 @@ export type Advice = {
   intro: string;
   insights: Insight[];
   verdict: string;
-  models: { name: string; why: string; msrp?: number | null }[];
+  models: { name: string; why: string; msrp?: number | null; tags?: string[] }[];
   closing: string;
 };
 
@@ -198,31 +198,20 @@ function expectedOwnershipTier(input: BriefInput) {
 
 function priceRealismScore(v: Vehicle, input: BriefInput) {
   const p = price(v);
-  const explicitBudget = parseBudgetAmountToNumber(
-    input.budgetAmount,
-    input.budgetType
-  );
+  const explicitBudget = parseBudgetAmountToNumber(input.budgetAmount, input.budgetType);
 
   if (!p && !explicitBudget) return 0;
 
   if (explicitBudget && p) {
     const ratio = p / explicitBudget;
 
-    // Too expensive
     if (ratio > 1.15 && input.budget !== "flexible") return -20;
     if (ratio > 1.25) return -18;
     if (ratio > 1.1) return -8;
 
-    // Ideal: close to budget, but below it
     if (ratio >= 0.85 && ratio <= 1.0) return 14;
-
-    // Good: still fairly close
     if (ratio >= 0.7 && ratio < 0.85) return 7;
-
-    // Acceptable, but probably underspending
     if (ratio >= 0.5 && ratio < 0.7) return 1;
-
-    // Too far below the stated budget
     if (ratio < 0.5 && explicitBudget >= 600000) return -8;
 
     return 0;
@@ -262,7 +251,6 @@ function scoreVehicle(v: Vehicle, input: BriefInput) {
   const tierGap = Math.abs(vehicleTier - targetTier);
 
   s -= tierGap * 1.5;
-
   s += priceRealismScore(v, input);
 
   if (input.passengers === "alone") {
@@ -506,6 +494,57 @@ function whyText(v: Vehicle, input: BriefInput) {
   return `City ${cityScore(v)}/10 • Running Costs ${runningCostScore(v)}/10 • Comfort ${comfortScore(v)}/10`;
 }
 
+function buildVehicleTags(v: Vehicle, input: BriefInput) {
+  const tags: string[] = [];
+
+  if (input.passengers === "family" || input.passengers === "large_family") {
+    if (familyScore(v) >= 7) tags.push("Family ready");
+    if (bootScore(v) >= 7) tags.push("Practical space");
+    if (comfortScore(v) >= 7) tags.push("Daily comfort");
+  }
+
+  if (input.distance === "long_distance") {
+    if (comfortScore(v) >= 7) tags.push("Long-distance comfort");
+    if (fuelType(v) === "diesel" || runningCostScore(v) >= 7) tags.push("Efficient cruising");
+  }
+
+  if (input.environment === "city") {
+    if (cityScore(v) >= 7) tags.push("City friendly");
+    if (runningCostScore(v) >= 7) tags.push("Low running stress");
+  }
+
+  if (input.environment === "rough" || input.drivingStyle === "heavy_duty") {
+    if (roughRoadScore(v) >= 7) tags.push("Road confidence");
+    if (bootScore(v) >= 7) tags.push("Utility strength");
+  }
+
+  if (input.drivingStyle === "enthusiastic" || input.ownership === "loves_cars") {
+    if (funScore(v) >= 7) tags.push("Driver appeal");
+    if (premiumScore(v) >= 7) tags.push("Premium feel");
+  }
+
+  if (input.fuelPreference === "electric") {
+    if (isElectric(v)) tags.push("Electric fit");
+    if (isHybrid(v)) tags.push("Hybrid bridge");
+    if (evMaturity(v) >= 7) tags.push("EV maturity");
+  }
+
+  if (input.ownership === "appliance") {
+    if (runningCostScore(v) >= 7) tags.push("Low-fuss ownership");
+    if (comfortScore(v) >= 7) tags.push("Easy daily use");
+  }
+
+  if (premiumScore(v) >= 8 && input.budget !== "tight") {
+    tags.push("Executive presence");
+  }
+
+  if (tags.length === 0) {
+    tags.push("Balanced fit", "Ownership confidence");
+  }
+
+  return Array.from(new Set(tags)).slice(0, 3);
+}
+
 export function generateAdvice(input: BriefInput): Advice {
   const vehicles = queryVehicles({}) as Vehicle[];
   const ranked = sortVehicles(vehicles, input);
@@ -554,6 +593,7 @@ export function generateAdvice(input: BriefInput): Advice {
       name: String(v.name || ""),
       why: whyText(v, input),
       msrp: v.msrp ?? null,
+      tags: buildVehicleTags(v, input),
     })),
 
     closing:
