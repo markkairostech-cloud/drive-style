@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "update:vehicles": "tsx scripts/updateVehicles.ts"
+    "update:vehicles": "tsx scripts/updateVehicles.ts",
+    "enrich:vehicles": "tsx scripts/enrichVehicles.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",
