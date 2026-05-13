@@ -1,4 +1,3 @@
-```ts
 import vehicles from "@/data/vehicles.json";
 
 export type VehicleStatus =
@@ -11,29 +10,36 @@ export type VehicleStatus =
 export function parseVehicleType(vehicleType: string) {
   const parts = (vehicleType || "").split("_").filter(Boolean);
 
-  const transmission: "MANUAL" | "AUTO" | undefined = parts.includes("MANUAL")
-    ? "MANUAL"
-    : parts.includes("AUTO")
+  const transmission: "MANUAL" | "AUTO" | undefined =
+    parts.includes("MANUAL")
+      ? "MANUAL"
+      : parts.includes("AUTO")
       ? "AUTO"
       : undefined;
 
-  const market: "PASSENGER" | "COMMERCIAL" | undefined = parts.includes("PASSENGER")
-    ? "PASSENGER"
-    : parts.includes("COMMERCIAL")
+  const market: "PASSENGER" | "COMMERCIAL" | undefined =
+    parts.includes("PASSENGER")
+      ? "PASSENGER"
+      : parts.includes("COMMERCIAL")
       ? "COMMERCIAL"
       : undefined;
 
-  const body = parts
-    .filter(
-      (p) =>
-        p !== "MANUAL" &&
-        p !== "AUTO" &&
-        p !== "PASSENGER" &&
-        p !== "COMMERCIAL"
-    )
-    .join("_") || undefined;
+  const body =
+    parts
+      .filter(
+        (p) =>
+          p !== "MANUAL" &&
+          p !== "AUTO" &&
+          p !== "PASSENGER" &&
+          p !== "COMMERCIAL"
+      )
+      .join("_") || undefined;
 
-  return { transmission, market, body };
+  return {
+    transmission,
+    market,
+    body,
+  };
 }
 
 export function prettyVehicleType(vehicleType: string) {
@@ -42,7 +48,11 @@ export function prettyVehicleType(vehicleType: string) {
   const parts: string[] = [];
 
   if (t.market) {
-    parts.push(t.market === "PASSENGER" ? "Passenger" : "Commercial");
+    parts.push(
+      t.market === "PASSENGER"
+        ? "Passenger"
+        : "Commercial"
+    );
   }
 
   if (t.body) {
@@ -50,7 +60,11 @@ export function prettyVehicleType(vehicleType: string) {
   }
 
   if (t.transmission) {
-    parts.push(t.transmission === "AUTO" ? "Automatic" : "Manual");
+    parts.push(
+      t.transmission === "AUTO"
+        ? "Automatic"
+        : "Manual"
+    );
   }
 
   return parts.filter(Boolean).join(" • ");
@@ -58,26 +72,37 @@ export function prettyVehicleType(vehicleType: string) {
 
 export type VehicleRecord = {
   id: string;
+
   name: string;
+
   brand: string;
+
   model: string;
 
   variant?: string;
+
   matchKey?: string;
 
   features: string[];
 
   msrp: number;
+
   bodyStyle: string;
+
   transmission: string;
+
   fuelType: string;
+
   drivetrain: string;
 
   performance: string;
+
   luxury: string;
+
   fuelEfficiency: string;
 
   active?: boolean;
+
   recommendable?: boolean;
 
   status?: VehicleStatus;
@@ -97,29 +122,35 @@ export function getVehicleCatalog(): VehicleRecord[] {
 export function queryVehicles(q: {
   transmissionAnyOf?: Array<"MANUAL" | "AUTO">;
   marketAnyOf?: Array<"PASSENGER" | "COMMERCIAL">;
-  bodyAnyOf?: string[]; // e.g. ["SUV", "SEDAN"]
+  bodyAnyOf?: string[];
 }) {
   const all = getVehicleCatalog();
 
   return all.filter((v: any) => {
-    const t = parseVehicleType(v.vehicleType);
+    const t = parseVehicleType(v.vehicleType || "");
 
     if (
       q.transmissionAnyOf?.length &&
-      (!t.transmission || !q.transmissionAnyOf.includes(t.transmission))
+      (!t.transmission ||
+        !q.transmissionAnyOf.includes(
+          t.transmission
+        ))
     ) {
       return false;
     }
 
     if (
       q.marketAnyOf?.length &&
-      (!t.market || !q.marketAnyOf.includes(t.market))
+      (!t.market ||
+        !q.marketAnyOf.includes(t.market))
     ) {
       return false;
     }
 
     if (q.bodyAnyOf?.length) {
-      const bodyStyle = String(v.bodyStyle || "").toUpperCase();
+      const bodyStyle = String(
+        v.bodyStyle || ""
+      ).toUpperCase();
 
       if (
         !q.bodyAnyOf.some((b) =>
@@ -134,6 +165,5 @@ export function queryVehicles(q: {
   });
 }
 
-// Backwards-compatible alias used by scripts.
-export const loadVehicleCatalog = getVehicleCatalog;
-```
+export const loadVehicleCatalog =
+  getVehicleCatalog;
