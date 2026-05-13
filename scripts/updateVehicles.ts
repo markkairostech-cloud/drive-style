@@ -1,6 +1,8 @@
 import fs from "fs";
 import path from "path";
+
 import { createVehicleMatchKey } from "../lib/vehicleIdentity";
+import { buildVehicleScores } from "../lib/vehicleScoring";
 
 type VehicleStatus =
   | "active"
@@ -21,6 +23,7 @@ type VehicleRecord = {
   features: string[];
 
   msrp: number;
+
   bodyStyle: string;
   transmission: string;
   fuelType: string;
@@ -29,6 +32,17 @@ type VehicleRecord = {
   performance: string;
   luxury: string;
   fuelEfficiency: string;
+
+  cityScore?: number;
+  familyScore?: number;
+  comfortScore?: number;
+  easyEntryScore?: number;
+  bootScore?: number;
+  runningCostScore?: number;
+  roughRoadScore?: number;
+  funScore?: number;
+  premiumScore?: number;
+  evSuitabilityScore?: number;
 
   active?: boolean;
   recommendable?: boolean;
@@ -43,6 +57,7 @@ const FULL_REFRESH = process.argv.includes("--full");
 const root = process.cwd();
 
 const currentPath = path.join(root, "data", "vehicles.json");
+
 const latestPath = path.join(
   root,
   "data",
@@ -68,6 +83,8 @@ function makeIdFromMatchKey(matchKey: string) {
 
 function normaliseIncomingVehicle(v: any): VehicleRecord {
   const matchKey = createVehicleMatchKey(v);
+
+  const scores = buildVehicleScores(v);
 
   return {
     id: v.id || makeIdFromMatchKey(matchKey),
@@ -111,8 +128,18 @@ function normaliseIncomingVehicle(v: any): VehicleRecord {
       .trim()
       .toLowerCase(),
 
-    active: true,
+    cityScore: scores.cityScore,
+    familyScore: scores.familyScore,
+    comfortScore: scores.comfortScore,
+    easyEntryScore: scores.easyEntryScore,
+    bootScore: scores.bootScore,
+    runningCostScore: scores.runningCostScore,
+    roughRoadScore: scores.roughRoadScore,
+    funScore: scores.funScore,
+    premiumScore: scores.premiumScore,
+    evSuitabilityScore: scores.evSuitabilityScore,
 
+    active: true,
     recommendable: false,
 
     status: "new_auto_added",
@@ -183,6 +210,18 @@ for (const raw of latest) {
       drivetrain:
         incoming.drivetrain || existing.drivetrain,
 
+      cityScore: incoming.cityScore,
+      familyScore: incoming.familyScore,
+      comfortScore: incoming.comfortScore,
+      easyEntryScore: incoming.easyEntryScore,
+      bootScore: incoming.bootScore,
+      runningCostScore: incoming.runningCostScore,
+      roughRoadScore: incoming.roughRoadScore,
+      funScore: incoming.funScore,
+      premiumScore: incoming.premiumScore,
+      evSuitabilityScore:
+        incoming.evSuitabilityScore,
+
       active: true,
 
       recommendable:
@@ -214,7 +253,10 @@ for (const existing of currentByKey.values()) {
     continue;
   }
 
-  if (existing.status === "missing_this_month") {
+  if (
+    existing.status ===
+    "missing_this_month"
+  ) {
     updated.push({
       ...existing,
       active: false,
@@ -240,13 +282,17 @@ updated.sort((a, b) => {
     b.brand
   );
 
-  if (brandCompare !== 0) return brandCompare;
+  if (brandCompare !== 0) {
+    return brandCompare;
+  }
 
   const modelCompare = a.model.localeCompare(
     b.model
   );
 
-  if (modelCompare !== 0) return modelCompare;
+  if (modelCompare !== 0) {
+    return modelCompare;
+  }
 
   return a.name.localeCompare(b.name);
 });
@@ -260,22 +306,42 @@ console.log("================================");
 console.log("");
 
 console.log(
-  `Mode: ${FULL_REFRESH ? "FULL REFRESH" : "SAFE UPDATE"}`
+  `Mode: ${
+    FULL_REFRESH
+      ? "FULL REFRESH"
+      : "SAFE UPDATE"
+  }`
 );
 
 console.log("");
 
-console.log(`Current catalogue: ${current.length}`);
-console.log(`Latest import rows: ${latest.length}`);
-console.log(`Final catalogue: ${updated.length}`);
+console.log(
+  `Current catalogue: ${current.length}`
+);
+
+console.log(
+  `Latest import rows: ${latest.length}`
+);
+
+console.log(
+  `Final catalogue: ${updated.length}`
+);
 
 console.log("");
 
-console.log(`Updated vehicles: ${updatedCount}`);
-console.log(`New vehicles added: ${addedCount}`);
+console.log(
+  `Updated vehicles: ${updatedCount}`
+);
+
+console.log(
+  `New vehicles added: ${addedCount}`
+);
 
 if (FULL_REFRESH) {
-  console.log(`Missing vehicles: ${missingCount}`);
+  console.log(
+    `Missing vehicles: ${missingCount}`
+  );
+
   console.log(
     `Discontinued vehicles: ${discontinuedCount}`
   );

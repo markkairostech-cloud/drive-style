@@ -101,6 +101,26 @@ export type VehicleRecord = {
 
   fuelEfficiency: string;
 
+  cityScore?: number;
+
+  familyScore?: number;
+
+  comfortScore?: number;
+
+  easyEntryScore?: number;
+
+  bootScore?: number;
+
+  runningCostScore?: number;
+
+  roughRoadScore?: number;
+
+  funScore?: number;
+
+  premiumScore?: number;
+
+  evSuitabilityScore?: number;
+
   active?: boolean;
 
   recommendable?: boolean;
