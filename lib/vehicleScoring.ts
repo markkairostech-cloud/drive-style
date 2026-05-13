@@ -11,15 +11,15 @@ type ScoreProfile = {
   funScore: number;
   premiumScore: number;
   evSuitabilityScore: number;
+
+  ownershipTier: number;
+  familyRealism: number;
+  evMaturity: number;
 };
 
 function clampScore(v: number) {
   return Math.max(1, Math.min(10, Math.round(v)));
 }
-
-// ========================================
-// BODY STYLE BASELINES
-// ========================================
 
 const BODY_STYLE_BASELINES: Record<string, ScoreProfile> = {
   hatchback: {
@@ -33,6 +33,9 @@ const BODY_STYLE_BASELINES: Record<string, ScoreProfile> = {
     funScore: 5,
     premiumScore: 3,
     evSuitabilityScore: 8,
+    ownershipTier: 2,
+    familyRealism: 4,
+    evMaturity: 5,
   },
 
   sedan: {
@@ -46,6 +49,9 @@ const BODY_STYLE_BASELINES: Record<string, ScoreProfile> = {
     funScore: 6,
     premiumScore: 6,
     evSuitabilityScore: 7,
+    ownershipTier: 5,
+    familyRealism: 7,
+    evMaturity: 5,
   },
 
   crossover: {
@@ -59,6 +65,9 @@ const BODY_STYLE_BASELINES: Record<string, ScoreProfile> = {
     funScore: 5,
     premiumScore: 5,
     evSuitabilityScore: 7,
+    ownershipTier: 5,
+    familyRealism: 8,
+    evMaturity: 6,
   },
 
   suv_mid: {
@@ -72,6 +81,9 @@ const BODY_STYLE_BASELINES: Record<string, ScoreProfile> = {
     funScore: 5,
     premiumScore: 6,
     evSuitabilityScore: 6,
+    ownershipTier: 6,
+    familyRealism: 8,
+    evMaturity: 5,
   },
 
   suv_large: {
@@ -85,6 +97,9 @@ const BODY_STYLE_BASELINES: Record<string, ScoreProfile> = {
     funScore: 5,
     premiumScore: 7,
     evSuitabilityScore: 4,
+    ownershipTier: 7,
+    familyRealism: 8,
+    evMaturity: 4,
   },
 
   mpv: {
@@ -98,6 +113,9 @@ const BODY_STYLE_BASELINES: Record<string, ScoreProfile> = {
     funScore: 2,
     premiumScore: 4,
     evSuitabilityScore: 5,
+    ownershipTier: 4,
+    familyRealism: 9,
+    evMaturity: 4,
   },
 
   pickup: {
@@ -111,96 +129,92 @@ const BODY_STYLE_BASELINES: Record<string, ScoreProfile> = {
     funScore: 6,
     premiumScore: 5,
     evSuitabilityScore: 2,
+    ownershipTier: 5,
+    familyRealism: 5,
+    evMaturity: 2,
   },
 };
 
-// ========================================
-// BRAND MODIFIERS
-// ========================================
-
-function applyBrandModifiers(
-  scores: ScoreProfile,
-  vehicle: VehicleRecord
-) {
+function applyBrandModifiers(scores: ScoreProfile, vehicle: VehicleRecord) {
   const brand = String(vehicle.brand || "").toLowerCase();
 
-  if (
-    ["bmw", "audi", "mercedes-benz"].includes(
-      brand
-    )
-  ) {
+  if (["bmw", "audi", "mercedes-benz", "lexus", "volvo"].includes(brand)) {
     scores.premiumScore += 2;
     scores.funScore += 1;
     scores.runningCostScore -= 2;
+    scores.ownershipTier += 2;
   }
 
-  if (
-    ["toyota", "suzuki"].includes(brand)
-  ) {
-    scores.runningCostScore += 2;
+  if (["porsche", "land rover", "jaguar"].includes(brand)) {
+    scores.premiumScore += 3;
+    scores.funScore += 2;
+    scores.runningCostScore -= 3;
+    scores.ownershipTier += 4;
+    scores.familyRealism -= 2;
   }
 
-  if (
-    ["mahindra", "ford", "isuzu"].includes(
-      brand
-    )
-  ) {
+  if (["toyota", "suzuki", "hyundai", "kia", "volkswagen"].includes(brand)) {
+    scores.runningCostScore += 1;
+    scores.familyRealism += 1;
+  }
+
+  if (["toyota", "suzuki"].includes(brand)) {
+    scores.runningCostScore += 1;
+  }
+
+  if (["mahindra", "ford", "isuzu", "gwm"].includes(brand)) {
     scores.roughRoadScore += 1;
   }
 
-  if (
-    ["byd", "tesla"].includes(brand)
-  ) {
+  if (["byd", "tesla"].includes(brand)) {
     scores.evSuitabilityScore += 2;
+    scores.evMaturity += 3;
+    scores.ownershipTier += 1;
   }
 }
 
-// ========================================
-// VEHICLE MODIFIERS
-// ========================================
+function applyVehicleModifiers(scores: ScoreProfile, vehicle: VehicleRecord) {
+  const fuel = String(vehicle.fuelType || "").toLowerCase();
+  const transmission = String(vehicle.transmission || "").toLowerCase();
+  const drivetrain = String(vehicle.drivetrain || "").toLowerCase();
+  const body = String(vehicle.bodyStyle || "").toLowerCase();
+  const type = String((vehicle as any).vehicleType || "").toLowerCase();
 
-function applyVehicleModifiers(
-  scores: ScoreProfile,
-  vehicle: VehicleRecord
-) {
-  const fuel = String(
-    vehicle.fuelType || ""
-  ).toLowerCase();
-
-  const transmission = String(
-    vehicle.transmission || ""
-  ).toLowerCase();
-
-  const drivetrain = String(
-    vehicle.drivetrain || ""
-  ).toLowerCase();
-
-  if (fuel === "electric") {
+  if (fuel === "electric" || fuel === "ev") {
     scores.cityScore += 1;
     scores.runningCostScore += 2;
-    scores.evSuitabilityScore += 3;
+    scores.evSuitabilityScore += 4;
+    scores.evMaturity += 4;
+    scores.ownershipTier += 1;
+  }
+
+  if (fuel === "hybrid") {
+    scores.runningCostScore += 2;
+    scores.evSuitabilityScore += 2;
+    scores.evMaturity += 2;
   }
 
   if (fuel === "diesel") {
     scores.roughRoadScore += 1;
     scores.runningCostScore += 1;
+    scores.evSuitabilityScore -= 2;
+    scores.evMaturity -= 2;
   }
 
-  if (
-    drivetrain.includes("4x4") ||
-    drivetrain.includes("awd")
-  ) {
+  if (drivetrain.includes("4x4") || drivetrain.includes("awd")) {
     scores.roughRoadScore += 2;
   }
 
   if (vehicle.performance === "yes") {
     scores.funScore += 2;
     scores.runningCostScore -= 1;
+    scores.ownershipTier += 1;
   }
 
   if (vehicle.luxury === "yes") {
     scores.premiumScore += 2;
     scores.comfortScore += 1;
+    scores.ownershipTier += 2;
   }
 
   if (vehicle.fuelEfficiency === "yes") {
@@ -209,30 +223,30 @@ function applyVehicleModifiers(
 
   if (transmission === "automatic") {
     scores.cityScore += 1;
+    scores.comfortScore += 1;
+  }
+
+  if (type.includes("commercial")) {
+    scores.familyRealism -= 4;
+    scores.comfortScore -= 1;
+    scores.premiumScore -= 1;
+  }
+
+  if (body === "mpv") {
+    scores.familyRealism += 1;
   }
 }
 
-// ========================================
-// MAIN SCORING FUNCTION
-// ========================================
+export function buildVehicleScores(vehicle: VehicleRecord): ScoreProfile {
+  const bodyStyle = String(vehicle.bodyStyle || "").toLowerCase();
 
-export function buildVehicleScores(
-  vehicle: VehicleRecord
-): ScoreProfile {
-  const bodyStyle = String(
-    vehicle.bodyStyle || ""
-  ).toLowerCase();
-
-  const baseline =
-    BODY_STYLE_BASELINES[bodyStyle] ||
-    BODY_STYLE_BASELINES["sedan"];
+  const baseline = BODY_STYLE_BASELINES[bodyStyle] || BODY_STYLE_BASELINES["sedan"];
 
   const scores: ScoreProfile = {
     ...baseline,
   };
 
   applyBrandModifiers(scores, vehicle);
-
   applyVehicleModifiers(scores, vehicle);
 
   Object.keys(scores).forEach((k) => {

@@ -128,6 +128,12 @@ export type VehicleRecord = {
   status?: VehicleStatus;
 
   lastSeen?: string;
+  
+  ownershipTier?: number;
+  
+  familyRealism?: number;
+  
+  evMaturity?: number;
 };
 
 export function getVehicleCatalog(): VehicleRecord[] {
