@@ -26,7 +26,7 @@ function buildSignature(params: Record<string, string>, passphrase?: string) {
     pairs.push(`passphrase=${encodePayFastValue(passphrase)}`);
   }
 
-  const paramString = pairs.join("&";
+  const paramString = pairs.join("&");
 
   return crypto.createHash("md5").update(paramString).digest("hex");
 }
