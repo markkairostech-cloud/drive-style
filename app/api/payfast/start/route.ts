@@ -26,7 +26,7 @@ function buildSignature(params: Record<string, string>, passphrase?: string) {
     pairs.push(`passphrase=${encodePayFastValue(passphrase)}`);
   }
 
-  const paramString = pairs.join("&");
+  const paramString = pairs.join("&";
 
   return crypto.createHash("md5").update(paramString).digest("hex");
 }
@@ -82,12 +82,16 @@ export async function POST(req: Request) {
       return_url,
       cancel_url,
       notify_url,
+
+      name_first: name,
+      email_address: email,
+
       m_payment_id,
       amount,
+
       item_name: `Drive Style ${tier}`,
       item_description: `${tier} concierge engagement`,
-      email_address: email,
-      name_first: name,
+
       custom_str1: tier,
       custom_str2: phone,
       custom_str3: email,
