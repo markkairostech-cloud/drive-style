@@ -74,7 +74,9 @@ export async function POST(req: Request) {
 
     const notify_url = `${siteUrl}/api/payfast/itn`;
 
-    const params: Record<string, string> = {
+    const payfastUrl = `https://${pfHost(mode)}/eng/process`;
+
+    const fields: Record<string, string> = {
       merchant_id,
       merchant_key,
       return_url,
@@ -93,17 +95,16 @@ export async function POST(req: Request) {
     };
 
     const signature = passphrase
-      ? buildSignature(params, passphrase)
-      : buildSignature(params);
+      ? buildSignature(fields, passphrase)
+      : buildSignature(fields);
 
-    const base = `https://${pfHost(mode)}/eng/process`;
-    const query = Object.entries({ ...params, signature })
-      .map(([key, value]) => `${key}=${encodePayFastValue(String(value))}`)
-      .join("&");
-
-    const redirectUrl = `${base}?${query}`;
-
-    return NextResponse.json({ redirectUrl });
+    return NextResponse.json({
+      payfastUrl,
+      fields: {
+        ...fields,
+        signature,
+      },
+    });
   } catch {
     return new NextResponse("Bad request", { status: 400 });
   }

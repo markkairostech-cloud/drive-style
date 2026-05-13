@@ -42,6 +42,29 @@ const PLAN_SUMMARY: Record<
   },
 };
 
+type PayFastStartResponse = {
+  payfastUrl?: string;
+  fields?: Record<string, string>;
+};
+
+function submitPayFastForm(payfastUrl: string, fields: Record<string, string>) {
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = payfastUrl;
+  form.style.display = "none";
+
+  Object.entries(fields).forEach(([key, value]) => {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = key;
+    input.value = value;
+    form.appendChild(input);
+  });
+
+  document.body.appendChild(form);
+  form.submit();
+}
+
 export default function EngagementModal({
   open,
   tier,
@@ -107,10 +130,13 @@ export default function EngagementModal({
         throw new Error(t || "Could not start payment");
       }
 
-      const data = (await res.json()) as { redirectUrl?: string };
-      if (!data?.redirectUrl) throw new Error("Missing redirect URL");
+      const data = (await res.json()) as PayFastStartResponse;
 
-      window.location.href = data.redirectUrl;
+      if (!data?.payfastUrl || !data?.fields) {
+        throw new Error("Missing PayFast payment details");
+      }
+
+      submitPayFastForm(data.payfastUrl, data.fields);
     } catch (err: any) {
       setStatus("error");
       setError(err?.message || "Could not start payment. Please try again.");
@@ -152,11 +178,11 @@ export default function EngagementModal({
                 </div>
 
                 <div className="mt-1 text-3xl sm:text-4xl font-semibold tracking-tight text-white">
-                   R{price}
+                  R{price}
                 </div>
 
                 <div className="mt-2 text-[12px] text-white/50">
-                    No subscription · No hidden fees
+                  No subscription · No hidden fees
                 </div>
               </div>
             </div>
