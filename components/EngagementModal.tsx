@@ -153,7 +153,7 @@ export default function EngagementModal({
         onClick={onClose}
       />
 
-      <div className="relative min-h-dvh w-full p-4 py-6 sm:flex sm:items-center sm:justify-center">
+      <div className="relative min-h-dvh w-full p-4 pt-6 pb-[45vh] sm:py-6 sm:flex sm:items-center sm:justify-center">
         <div className="relative mx-auto w-full max-w-xl">
           <CineCard className="p-0 overflow-hidden border border-white/10 bg-[#0b1116] shadow-[0_20px_60px_rgba(0,0,0,0.6)]">
             <div className="p-6 sm:p-7">
