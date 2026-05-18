@@ -9,12 +9,13 @@ export async function POST(req: Request) {
     const payment_status = params.get("payment_status");
     const m_payment_id = params.get("m_payment_id");
     const amount = params.get("amount_gross");
+
     const tier = params.get("custom_str1");
     const phone = params.get("custom_str2");
     const email = params.get("custom_str3");
     const name = params.get("custom_str4");
 
-    // ✅ Only process successful payments
+    // Only process completed payments
     if (payment_status !== "COMPLETE") {
       return new NextResponse("Ignored", { status: 200 });
     }
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
 
         specialist_followup:
           tier === "Gold" || tier === "Platinum",
-      }
+      },
       {
         onConflict: "m_payment_id",
       }
@@ -45,9 +46,11 @@ export async function POST(req: Request) {
     console.log("Payment saved:", m_payment_id);
 
     return new NextResponse("OK", { status: 200 });
-
   } catch (err: any) {
     console.error("ITN error:", err?.message || err);
-    return new NextResponse("Error", { status: 500 });
+
+    return new NextResponse("Error", {
+      status: 500,
+    });
   }
 }
