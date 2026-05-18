@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import PremiumShell from "@/components/PremiumShell";
 import TopNav from "@/components/cinematic/TopNav";
@@ -14,11 +15,11 @@ type Advice = {
   insights: { title: string; text: string }[];
   verdict?: string;
   models: {
-  name: string;
-  why: string;
-  msrp?: number;
-  tags?: string[];
-}[];
+    name: string;
+    why: string;
+    msrp?: number;
+    tags?: string[];
+  }[];
   closing: string;
 
   answers?: {
@@ -38,6 +39,10 @@ const STORAGE = {
 } as const;
 
 export default function ResultsPage() {
+  const searchParams = useSearchParams();
+
+  const isPaidJourney = searchParams.get("paidJourney") === "true";
+
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [advice, setAdvice] = useState<Advice | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<PlanTier | null>(null);
@@ -98,8 +103,9 @@ export default function ResultsPage() {
                       <div className="text-white font-medium">Best next step</div>
 
                       <div className="mt-1 text-white/55">
-                        Review your shortlist, then choose the level of support you
-                        want from us.
+                        {isPaidJourney
+                          ? "Review your recommendation, then request your detailed report."
+                          : "Review your shortlist, then choose the level of support you want from us."}
                       </div>
                     </div>
 
@@ -197,9 +203,11 @@ export default function ResultsPage() {
                   </p>
                 </div>
 
-                <Link href="/quiz" className="cine-btn-secondary">
-                  Adjust my brief
-                </Link>
+                {!isPaidJourney ? (
+                  <Link href="/quiz" className="cine-btn-secondary">
+                    Adjust my brief
+                  </Link>
+                ) : null}
               </div>
 
               <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -264,45 +272,66 @@ export default function ResultsPage() {
               </div>
             </div>
 
-            {/* SUPPORT CTA */}
-            <CineCard className="p-6 sm:p-7 border border-white/8 bg-white/[0.02]">
-              <div className="max-w-3xl">
-                <div className="cine-pill">Next step</div>
+            {/* FINAL CTA */}
+            {isPaidJourney ? (
+              <CineCard className="p-7 border border-teal-300/20 bg-white/[0.02]">
+                <div className="max-w-2xl">
+                  <div className="cine-pill">Final step</div>
 
-                <h2 className="cine-h2 mt-4">Choose how much support you want</h2>
+                  <h2 className="cine-h2 mt-4">
+                    Receive your Drive Style recommendation
+                  </h2>
 
-                <p className="mt-3 text-white/72 leading-relaxed">
-                  {advice.closing}
-                </p>
-              </div>
+                  <p className="mt-4 text-white/70 leading-relaxed">
+                    Your personalised recommendation has been generated. Click below
+                    to create and send your detailed Drive Style report.
+                  </p>
 
-              <div className="mt-7 grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
-                <PlanTile
-                  title="Silver"
-                  subtitle="Sharper guidance, more clarity"
-                  description="A focused support layer for buyers who want better structure and practical next steps."
-                  cta="Continue with Silver"
-                  onSelect={() => setSelectedPlan("Silver")}
-                />
+                  <button type="button" className="cine-btn-primary mt-8">
+                    Send me my Drive-Style Recommendation →
+                  </button>
+                </div>
+              </CineCard>
+            ) : (
+              <CineCard className="p-6 sm:p-7 border border-white/8 bg-white/[0.02]">
+                <div className="max-w-3xl">
+                  <div className="cine-pill">Next step</div>
 
-                <PlanTile
-                  title="Gold"
-                  subtitle="More support, less effort"
-                  description="Our most balanced option for buyers who want hands-on guidance without going fully end-to-end."
-                  cta="Continue with Gold"
-                  highlight
-                  onSelect={() => setSelectedPlan("Gold")}
-                />
+                  <h2 className="cine-h2 mt-4">Choose how much support you want</h2>
 
-                <PlanTile
-                  title="Platinum"
-                  subtitle="End-to-end premium guidance"
-                  description="For buyers who want the most involved support across choice, finance, insurance, and final decision-making."
-                  cta="Continue with Platinum"
-                  onSelect={() => setSelectedPlan("Platinum")}
-                />
-              </div>
-            </CineCard>
+                  <p className="mt-3 text-white/72 leading-relaxed">
+                    {advice.closing}
+                  </p>
+                </div>
+
+                <div className="mt-7 grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+                  <PlanTile
+                    title="Silver"
+                    subtitle="Sharper guidance, more clarity"
+                    description="A focused support layer for buyers who want better structure and practical next steps."
+                    cta="Continue with Silver"
+                    onSelect={() => setSelectedPlan("Silver")}
+                  />
+
+                  <PlanTile
+                    title="Gold"
+                    subtitle="More support, less effort"
+                    description="Our most balanced option for buyers who want hands-on guidance without going fully end-to-end."
+                    cta="Continue with Gold"
+                    highlight
+                    onSelect={() => setSelectedPlan("Gold")}
+                  />
+
+                  <PlanTile
+                    title="Platinum"
+                    subtitle="End-to-end premium guidance"
+                    description="For buyers who want the most involved support across choice, finance, insurance, and final decision-making."
+                    cta="Continue with Platinum"
+                    onSelect={() => setSelectedPlan("Platinum")}
+                  />
+                </div>
+              </CineCard>
+            )}
           </div>
         )}
 
