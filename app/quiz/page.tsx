@@ -103,7 +103,16 @@ export default function QuizPage() {
         // ignore storage errors
       }
 
-      router.push("/results");
+      const paidJourney =
+          typeof window !== "undefined" &&
+          window.location.search.includes("paidJourney=true");
+
+        router.push(
+          paidJourney
+            ? "/results?paidJourney=true"
+            : "/results"
+        );
+        
     } catch (e: any) {
       setStatus("error");
       setError(e?.message || "Something went wrong");
