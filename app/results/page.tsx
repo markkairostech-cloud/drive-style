@@ -47,7 +47,7 @@ function ResultsPageContent() {
   const [advice, setAdvice] = useState<Advice | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<PlanTier | null>(null);
   const [sendingReport, setSendingReport] = useState(false);
-  const [sendingReport, setSendingReport] = useState(false);
+  
 
   useEffect(() => {
     const raw =
