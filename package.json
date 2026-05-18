@@ -11,11 +11,13 @@
     "enrich:vehicles": "tsx scripts/enrichVehicles.ts"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^4.5.1",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.103.0",
     "next": "14.2.18",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "resend": "^6.12.3"
   },
   "devDependencies": {
     "@types/node": "^20",

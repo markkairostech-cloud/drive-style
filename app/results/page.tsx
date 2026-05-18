@@ -46,6 +46,8 @@ function ResultsPageContent() {
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [advice, setAdvice] = useState<Advice | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<PlanTier | null>(null);
+  const [sendingReport, setSendingReport] = useState(false);
+  const [sendingReport, setSendingReport] = useState(false);
 
   useEffect(() => {
     const raw =
@@ -63,6 +65,47 @@ function ResultsPageContent() {
       setLoadState("empty");
     }
   }, []);
+
+  async function sendRecommendation() {
+  if (!advice || sendingReport) return;
+
+  setSendingReport(true);
+
+  try {
+    const email =
+      localStorage.getItem("driveStyleEmail") || "";
+
+    const name =
+      localStorage.getItem("driveStyleName") || "";
+
+    await fetch(
+      "/api/recommendation/send",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":"application/json",
+        },
+        body: JSON.stringify({
+          email,
+          name,
+          tier: "paid",
+          recommendation: advice,
+        }),
+      }
+    );
+
+    alert(
+      "Drive Style recommendation request received."
+    );
+
+  } catch {
+    alert(
+      "Could not send recommendation"
+    );
+  }
+
+  setSendingReport(false);
+}
 
   const topModels = useMemo(() => (advice?.models || []).slice(0, 3), [advice]);
 
@@ -287,9 +330,17 @@ function ResultsPageContent() {
                     to create and send your detailed Drive Style report.
                   </p>
 
-                  <button type="button" className="cine-btn-primary mt-8">
-                    Send me my Drive-Style Recommendation →
+                  <button
+                    type="button"
+                    onClick={sendRecommendation}
+                    disabled={sendingReport}
+                    className="cine-btn-primary mt-8"
+                  >
+                    {sendingReport
+                      ? "Sending..."
+                      : "Send me my Drive-Style Recommendation →"}
                   </button>
+
                 </div>
               </CineCard>
             ) : (
