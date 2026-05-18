@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import PremiumShell from "@/components/PremiumShell";
@@ -38,7 +38,7 @@ const STORAGE = {
   phone: "driveStylePhone",
 } as const;
 
-export default function ResultsPage() {
+function ResultsPageContent() {
   const searchParams = useSearchParams();
 
   const isPaidJourney = searchParams.get("paidJourney") === "true";
@@ -374,6 +374,14 @@ export default function ResultsPage() {
 
       <Footer />
     </PremiumShell>
+  );
+}
+
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ResultsPageContent />
+    </Suspense>
   );
 }
 
