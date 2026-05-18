@@ -30,7 +30,13 @@ export async function POST(req: Request) {
         phone,
         amount,
         status: payment_status,
-      },
+
+        quiz_completed: false,
+        recommendation_sent: false,
+
+        specialist_followup:
+          tier === "Gold" || tier === "Platinum",
+      }
       {
         onConflict: "m_payment_id",
       }
