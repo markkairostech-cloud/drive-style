@@ -20,11 +20,26 @@ export type Insight = {
   text: string;
 };
 
+export type AdviceModel = {
+  name: string;
+  why: string;
+  msrp?: number | null;
+  tags?: string[];
+  imageUrl?: string;
+  scores?: {
+    premiumFeel: number;
+    driverAppeal: number;
+    comfort: number;
+  };
+  strengths?: string[];
+  watchOuts?: string[];
+};
+
 export type Advice = {
   intro: string;
   insights: Insight[];
   verdict: string;
-  models: { name: string; why: string; msrp?: number | null; tags?: string[] }[];
+  models: AdviceModel[];
   closing: string;
 };
 
@@ -63,6 +78,10 @@ type Vehicle = {
 function getNumericScore(value: unknown, fallback = 5) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function clampScore(value: number) {
+  return Math.max(1, Math.min(10, Math.round(value)));
 }
 
 function cityScore(v: Vehicle) {
@@ -129,6 +148,10 @@ function brand(v: Vehicle) {
   return String(v.brand || "").trim().toLowerCase();
 }
 
+function vehicleName(v: Vehicle) {
+  return String(v.name || "").trim();
+}
+
 function isElectric(v: Vehicle) {
   const fuel = fuelType(v);
   return fuel.includes("electric") || fuel === "ev";
@@ -149,6 +172,24 @@ function modelFamily(v: Vehicle) {
     .replace(/\d+(\.\d+)?/g, "")
     .replace(/[^a-z]/g, "")
     .trim();
+}
+
+function slugifyVehicleName(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function imageUrlForVehicle(v: Vehicle) {
+  const name = vehicleName(v);
+
+  if (!name) {
+    return undefined;
+  }
+
+  return `/cars/${slugifyVehicleName(name)}.jpg`;
 }
 
 function parseBudgetAmountToNumber(inputBudgetAmount?: string, budgetType?: string): number | null {
@@ -475,23 +516,25 @@ function buildShortlist(ranked: { vehicle: Vehicle; score: number }[]) {
 }
 
 function whyText(v: Vehicle, input: BriefInput) {
+  const name = vehicleName(v);
+
   if (input.fuelPreference === "electric" && (isElectric(v) || isHybrid(v))) {
-    return `EV Fit ${evScore(v)}/10 • Running Costs ${runningCostScore(v)}/10 • Comfort ${comfortScore(v)}/10`;
+    return `${name} is recommended because it gives you an electrified ownership direction while still considering comfort, usability, and running-cost confidence. It scores strongly for EV suitability and should feel more practical than simply choosing an electric vehicle on paper.`;
   }
 
   if (input.passengers === "family" || input.passengers === "large_family") {
-    return `Family ${familyScore(v)}/10 • Comfort ${comfortScore(v)}/10 • Practicality ${bootScore(v)}/10`;
+    return `${name} is recommended because it balances family practicality with everyday comfort. It gives priority to passenger space, boot usefulness, daily liveability, and a more realistic ownership experience.`;
   }
 
   if (input.drivingStyle === "heavy_duty") {
-    return `Capability ${roughRoadScore(v)}/10 • Practicality ${bootScore(v)}/10 • Running Costs ${runningCostScore(v)}/10`;
+    return `${name} is recommended because your answers suggest that capability and confidence matter. It suits a buyer who needs stronger practicality, road presence, and a more robust ownership profile.`;
   }
 
   if (input.drivingStyle === "enthusiastic" || input.ownership === "loves_cars") {
-    return `Fun ${funScore(v)}/10 • Premium Feel ${premiumScore(v)}/10 • Comfort ${comfortScore(v)}/10`;
+    return `${name} is recommended because it offers stronger driver appeal while still keeping comfort and ownership fit in view. It should feel more rewarding than a purely practical option.`;
   }
 
-  return `City ${cityScore(v)}/10 • Running Costs ${runningCostScore(v)}/10 • Comfort ${comfortScore(v)}/10`;
+  return `${name} is recommended because it offers a balanced ownership fit. It suits your need for everyday usability, comfort, running-cost awareness, and a vehicle that should feel easy to live with.`;
 }
 
 function buildVehicleTags(v: Vehicle, input: BriefInput) {
@@ -545,6 +588,91 @@ function buildVehicleTags(v: Vehicle, input: BriefInput) {
   return Array.from(new Set(tags)).slice(0, 3);
 }
 
+function buildScores(v: Vehicle) {
+  return {
+    premiumFeel: clampScore(premiumScore(v)),
+    driverAppeal: clampScore(funScore(v)),
+    comfort: clampScore(comfortScore(v)),
+  };
+}
+
+function buildStrengths(v: Vehicle, input: BriefInput) {
+  const strengths: string[] = [];
+
+  if (premiumScore(v) >= 7) {
+    strengths.push("Strong premium feel and ownership presence.");
+  }
+
+  if (comfortScore(v) >= 7) {
+    strengths.push("Comfortable enough for regular daily use and longer journeys.");
+  }
+
+  if (funScore(v) >= 7) {
+    strengths.push("Good driver appeal compared with more appliance-like alternatives.");
+  }
+
+  if (familyScore(v) >= 7 && (input.passengers === "family" || input.passengers === "large_family")) {
+    strengths.push("Practical family suitability with useful passenger and space credentials.");
+  }
+
+  if (bootScore(v) >= 7) {
+    strengths.push("Useful load space for everyday errands, luggage, and lifestyle needs.");
+  }
+
+  if (runningCostScore(v) >= 7) {
+    strengths.push("Better running-cost confidence than less efficient alternatives.");
+  }
+
+  if (roughRoadScore(v) >= 7 && (input.environment === "rough" || input.drivingStyle === "heavy_duty")) {
+    strengths.push("Stronger road confidence for rougher conditions or heavier use.");
+  }
+
+  if (strengths.length === 0) {
+    strengths.push(
+      "Balanced match across comfort, usability, and ownership confidence.",
+      "Good all-round fit for the answers provided.",
+      "Sensible recommendation before moving into dealer or finance conversations."
+    );
+  }
+
+  return strengths.slice(0, 3);
+}
+
+function buildWatchOuts(v: Vehicle, input: BriefInput) {
+  const watchOuts: string[] = [];
+
+  if (premiumScore(v) >= 8 || ownershipTier(v) >= 8) {
+    watchOuts.push("Confirm insurance premium before committing.");
+    watchOuts.push("Check warranty, service plan, and maintenance-plan status.");
+  }
+
+  if (input.budget === "tight") {
+    watchOuts.push("Compare total finance cost, not only the monthly repayment.");
+  }
+
+  if (price(v)) {
+    watchOuts.push("Validate the advertised price against current South African market listings.");
+  }
+
+  if (isElectric(v) || isHybrid(v)) {
+    watchOuts.push("Confirm charging, battery warranty, and real-world range suitability.");
+  }
+
+  if (input.passengers === "family" || input.passengers === "large_family") {
+    watchOuts.push("Test rear-seat space, boot access, and child-seat practicality in person.");
+  }
+
+  if (watchOuts.length === 0) {
+    watchOuts.push(
+      "Check service history before making an offer.",
+      "Confirm accident history and ownership documentation.",
+      "Review finance, insurance, warranty, and maintenance documents before signing."
+    );
+  }
+
+  return Array.from(new Set(watchOuts)).slice(0, 3);
+}
+
 export function generateAdvice(input: BriefInput): Advice {
   const vehicles = queryVehicles({}) as Vehicle[];
   const ranked = sortVehicles(vehicles, input);
@@ -572,7 +700,7 @@ export function generateAdvice(input: BriefInput): Advice {
       {
         title: "Cost",
         text:
-          "Drive Style now weighs budget mindset, ownership tier, likely running costs, and price realism when shaping the shortlist.",
+          "Drive Style weighs budget mindset, ownership tier, likely running costs, and price realism when shaping the shortlist.",
       },
       {
         title: "Lifestyle",
@@ -590,13 +718,17 @@ export function generateAdvice(input: BriefInput): Advice {
       : "The shortlist below balances intelligence, practicality, emotional ownership fit, and real-world suitability.",
 
     models: shortlist.map((v) => ({
-      name: String(v.name || ""),
+      name: vehicleName(v),
+      imageUrl: imageUrlForVehicle(v),
       why: whyText(v, input),
       msrp: v.msrp ?? null,
       tags: buildVehicleTags(v, input),
+      scores: buildScores(v),
+      strengths: buildStrengths(v, input),
+      watchOuts: buildWatchOuts(v, input),
     })),
 
     closing:
-      "Want me to refine this further around luxury feel, running costs, practicality, or long-term ownership?",
+      "Use this report as a structured decision guide before moving into finance, insurance, dealer conversations, or final purchase paperwork.",
   };
 }

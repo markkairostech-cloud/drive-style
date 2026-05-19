@@ -4,13 +4,24 @@ import {
   Text,
   View,
   StyleSheet,
+  Image,
 } from "@react-pdf/renderer";
+
+type ScoreSet = {
+  premiumFeel?: number;
+  driverAppeal?: number;
+  comfort?: number;
+};
 
 type Model = {
   name: string;
   why: string;
   msrp?: number;
   tags?: string[];
+  imageUrl?: string;
+  strengths?: string[];
+  watchOuts?: string[];
+  scores?: ScoreSet;
 };
 
 type DriveStyleReportProps = {
@@ -30,6 +41,9 @@ type DriveStyleReportProps = {
   };
 };
 
+const BRAND_URL = "www.drive-style.co.za";
+const SITE_URL = "https://drive-style.co.za";
+
 const styles = StyleSheet.create({
   page: {
     padding: 42,
@@ -46,41 +60,92 @@ const styles = StyleSheet.create({
     fontSize: 13,
     letterSpacing: 3,
     color: "#67e8f9",
-    marginBottom: 42,
+    marginBottom: 28,
     textTransform: "uppercase",
   },
   coverTitle: {
-    fontSize: 34,
+    fontSize: 31,
     lineHeight: 1.12,
-    marginBottom: 18,
-  },
-  coverSubtitle: {
-    fontSize: 14,
-    lineHeight: 1.6,
-    color: "#cbd5e1",
     marginBottom: 12,
   },
-  coverBox: {
-    marginTop: 44,
+  coverSubtitle: {
+    fontSize: 12,
+    lineHeight: 1.55,
+    color: "#cbd5e1",
+    marginBottom: 4,
+  },
+  heroCard: {
+    marginTop: 24,
     border: "1px solid #334155",
+    borderRadius: 18,
+    padding: 16,
+    backgroundColor: "#0f172a",
+  },
+  heroImage: {
+    width: "100%",
+    height: 190,
     borderRadius: 14,
+    marginBottom: 14,
+    objectFit: "cover",
+  },
+  imagePlaceholder: {
+    width: "100%",
+    height: 120,
+    borderRadius: 14,
+    marginBottom: 14,
+    backgroundColor: "#111827",
+    border: "1px solid #334155",
     padding: 18,
   },
+  placeholderText: {
+    color: "#94a3b8",
+    fontSize: 10,
+    lineHeight: 1.5,
+  },
   coverLabel: {
-    fontSize: 9,
+    fontSize: 8,
     letterSpacing: 1.5,
     color: "#67e8f9",
     textTransform: "uppercase",
-    marginBottom: 8,
+    marginBottom: 7,
   },
   coverValue: {
-    fontSize: 20,
-    color: "#ffffff",
-  },
-  sectionTitle: {
     fontSize: 19,
-    marginBottom: 14,
-    color: "#0f172a",
+    color: "#ffffff",
+    marginBottom: 8,
+  },
+  verdictBox: {
+    marginTop: 14,
+    borderRadius: 12,
+    padding: 12,
+    backgroundColor: "#ecfeff",
+  },
+  verdictText: {
+    fontSize: 10,
+    lineHeight: 1.55,
+    color: "#164e63",
+  },
+  scoreRow: {
+    flexDirection: "row",
+    marginTop: 14,
+  },
+  scorePill: {
+    flex: 1,
+    marginRight: 8,
+    borderRadius: 999,
+    padding: 8,
+    backgroundColor: "#0e7490",
+  },
+  scoreLabel: {
+    fontSize: 7,
+    color: "#cffafe",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 3,
+  },
+  scoreValue: {
+    fontSize: 13,
+    color: "#ffffff",
   },
   sectionKicker: {
     fontSize: 9,
@@ -88,6 +153,11 @@ const styles = StyleSheet.create({
     color: "#0891b2",
     textTransform: "uppercase",
     marginBottom: 8,
+  },
+  sectionTitle: {
+    fontSize: 21,
+    marginBottom: 14,
+    color: "#0f172a",
   },
   paragraph: {
     fontSize: 11,
@@ -97,45 +167,20 @@ const styles = StyleSheet.create({
   muted: {
     color: "#64748b",
   },
-  card: {
+  dnaCard: {
     border: "1px solid #d1d5db",
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 14,
-  },
-  highlightCard: {
-    border: "1px solid #67e8f9",
     borderRadius: 14,
     padding: 16,
     marginBottom: 16,
-    backgroundColor: "#f0fdfa",
+    backgroundColor: "#f8fafc",
   },
-  modelName: {
-    fontSize: 16,
+  dnaTitle: {
+    fontSize: 15,
     marginBottom: 8,
     color: "#0f172a",
   },
-  price: {
-    fontSize: 10,
-    color: "#334155",
-    marginTop: 8,
-  },
-  tagRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-    marginTop: 10,
-  },
-  tag: {
-    fontSize: 8,
-    padding: 5,
-    borderRadius: 8,
-    backgroundColor: "#ecfeff",
-    color: "#155e75",
-  },
   insightGrid: {
     flexDirection: "row",
-    gap: 10,
     marginTop: 10,
     marginBottom: 14,
   },
@@ -144,7 +189,8 @@ const styles = StyleSheet.create({
     border: "1px solid #e5e7eb",
     borderRadius: 10,
     padding: 10,
-    backgroundColor: "#f8fafc",
+    backgroundColor: "#ffffff",
+    marginRight: 8,
   },
   insightTitle: {
     fontSize: 10,
@@ -156,21 +202,87 @@ const styles = StyleSheet.create({
     lineHeight: 1.5,
     color: "#475569",
   },
-  checklistItem: {
+  recommendationCard: {
+    border: "1px solid #67e8f9",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    backgroundColor: "#f0fdfa",
+  },
+  modelName: {
+    fontSize: 17,
+    marginBottom: 8,
+    color: "#0f172a",
+  },
+  altCard: {
+    border: "1px solid #d1d5db",
+    borderRadius: 14,
+    padding: 13,
+    marginBottom: 12,
+    backgroundColor: "#ffffff",
+  },
+  altImage: {
+    width: "100%",
+    height: 100,
+    borderRadius: 10,
+    marginBottom: 10,
+    objectFit: "cover",
+  },
+  price: {
+    fontSize: 10,
+    color: "#334155",
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  tagRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 8,
+  },
+  tag: {
+    fontSize: 8,
+    padding: 5,
+    borderRadius: 8,
+    backgroundColor: "#ecfeff",
+    color: "#155e75",
+    marginRight: 6,
+    marginBottom: 6,
+  },
+  twoColumnRow: {
+    flexDirection: "row",
+    marginTop: 8,
+  },
+  column: {
+    flex: 1,
+    marginRight: 10,
+  },
+  miniTitle: {
     fontSize: 11,
-    lineHeight: 1.6,
+    color: "#0f172a",
     marginBottom: 7,
+  },
+  bullet: {
+    fontSize: 10,
+    lineHeight: 1.55,
+    marginBottom: 5,
+    color: "#334155",
   },
   divider: {
     height: 1,
     backgroundColor: "#e5e7eb",
-    marginVertical: 16,
+    marginVertical: 14,
   },
   footer: {
     position: "absolute",
     bottom: 24,
     left: 42,
     right: 42,
+    fontSize: 9,
+    color: "#94a3b8",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  footerText: {
     fontSize: 9,
     color: "#94a3b8",
   },
@@ -181,6 +293,78 @@ function formatPrice(value?: number) {
   return `R${value.toLocaleString("en-ZA")}`;
 }
 
+function formatDate() {
+  return new Date().toLocaleDateString("en-ZA", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function imageSrc(src?: string) {
+  if (!src) return null;
+  if (src.startsWith("http") || src.startsWith("data:")) return src;
+  if (src.startsWith("/")) return `${SITE_URL}${src}`;
+  return `${SITE_URL}/${src}`;
+}
+
+function scoreValue(value?: number) {
+  if (typeof value !== "number") return "8/10";
+  return `${value}/10`;
+}
+
+function ReportFooter() {
+  return (
+    <View style={styles.footer} fixed>
+      <Text style={styles.footerText}>Prepared by Drive Style</Text>
+      <Text style={styles.footerText}>{BRAND_URL}</Text>
+    </View>
+  );
+}
+
+function ScorePill({ label, value }: { label: string; value?: number }) {
+  return (
+    <View style={styles.scorePill}>
+      <Text style={styles.scoreLabel}>{label}</Text>
+      <Text style={styles.scoreValue}>{scoreValue(value)}</Text>
+    </View>
+  );
+}
+
+function TagRow({ tags }: { tags?: string[] }) {
+  if (!tags?.length) return null;
+
+  return (
+    <View style={styles.tagRow}>
+      {tags.map((tag) => (
+        <Text key={tag} style={styles.tag}>
+          {tag}
+        </Text>
+      ))}
+    </View>
+  );
+}
+
+function BulletList({
+  items,
+  fallback,
+}: {
+  items?: string[];
+  fallback: string[];
+}) {
+  const list = items?.length ? items : fallback;
+
+  return (
+    <>
+      {list.map((item) => (
+        <Text key={item} style={styles.bullet}>
+          • {item}
+        </Text>
+      ))}
+    </>
+  );
+}
+
 export default function DriveStyleReport({
   customerName,
   tier = "Drive Style",
@@ -188,6 +372,8 @@ export default function DriveStyleReport({
   advice,
 }: DriveStyleReportProps) {
   const topModel = advice.models?.[0];
+  const alternatives = advice.models?.slice(1, 4) || [];
+  const topImage = imageSrc(topModel?.imageUrl);
 
   return (
     <Document>
@@ -201,49 +387,73 @@ export default function DriveStyleReport({
         <Text style={styles.coverSubtitle}>
           Prepared for {customerName || "Drive Style customer"}
         </Text>
-
         <Text style={styles.coverSubtitle}>Package: {tier}</Text>
+        <Text style={styles.coverSubtitle}>Date: {formatDate()}</Text>
 
-        <View style={styles.coverBox}>
-          <Text style={styles.coverLabel}>Drive Style Profile</Text>
-          <Text style={styles.coverValue}>
-            {narrative?.archetype || "Personalised Recommendation"}
-          </Text>
-        </View>
+        <View style={styles.heroCard}>
+          {topImage ? (
+            <Image src={topImage} style={styles.heroImage} />
+          ) : (
+            <View style={styles.imagePlaceholder}>
+              <Text style={styles.placeholderText}>
+                Vehicle image will appear here once an imageUrl is supplied for
+                this recommendation.
+              </Text>
+            </View>
+          )}
 
-        <View style={styles.coverBox}>
-          <Text style={styles.coverLabel}>Primary Recommendation</Text>
+          <Text style={styles.coverLabel}>Top Recommendation</Text>
           <Text style={styles.coverValue}>
             {topModel?.name || "Your shortlist is included inside"}
           </Text>
+
+          <View style={styles.verdictBox}>
+            <Text style={styles.verdictText}>
+              {advice.verdict ||
+                "Your recommendation has been selected around real-world fit, ownership confidence, comfort, lifestyle suitability and long-term enjoyment."}
+            </Text>
+          </View>
+
+          <View style={styles.scoreRow}>
+            <ScorePill
+              label="Premium Feel"
+              value={topModel?.scores?.premiumFeel}
+            />
+            <ScorePill
+              label="Driver Appeal"
+              value={topModel?.scores?.driverAppeal}
+            />
+            <ScorePill label="Comfort" value={topModel?.scores?.comfort} />
+          </View>
         </View>
 
-        <Text style={styles.footer}>
-          Drive Style Vehicle Advisory Report
-        </Text>
+        <ReportFooter />
       </Page>
 
       <Page size="A4" style={styles.page}>
-        <Text style={styles.sectionKicker}>Profile</Text>
-        <Text style={styles.sectionTitle}>Your Drive Style Profile</Text>
-
-        <Text style={styles.paragraph}>
-          {narrative?.identitySummary || advice.intro}
+        <Text style={styles.sectionKicker}>Your Drive DNA</Text>
+        <Text style={styles.sectionTitle}>
+          {narrative?.archetype || "Personalised Vehicle Profile"}
         </Text>
 
-        <Text style={styles.paragraph}>
-          {narrative?.recommendationStory || advice.intro}
-        </Text>
+        <View style={styles.dnaCard}>
+          <Text style={styles.dnaTitle}>What your answers suggest</Text>
+          <Text style={styles.paragraph}>
+            {narrative?.identitySummary ||
+              advice.intro ||
+              "Your answers suggest that the right vehicle needs to balance emotional appeal with practical day-to-day confidence."}
+          </Text>
+          <Text style={styles.paragraph}>
+            {narrative?.recommendationStory ||
+              "The best match is not simply the most expensive, fastest or newest option. It is the vehicle that fits your lifestyle, feels right on normal roads, supports your daily routine, and still feels special after the first few months of ownership."}
+          </Text>
+        </View>
 
-        <View style={styles.divider} />
-
-        <Text style={styles.sectionKicker}>Recommendation Logic</Text>
-        <Text style={styles.sectionTitle}>Why These Vehicles Were Selected</Text>
-
-        <Text style={styles.paragraph}>{advice.intro}</Text>
+        <Text style={styles.sectionKicker}>Decision Themes</Text>
+        <Text style={styles.sectionTitle}>What mattered most</Text>
 
         <View style={styles.insightGrid}>
-          {(advice.insights || []).map((insight) => (
+          {(advice.insights || []).slice(0, 3).map((insight) => (
             <View key={insight.title} style={styles.insightCard}>
               <Text style={styles.insightTitle}>{insight.title}</Text>
               <Text style={styles.insightText}>{insight.text}</Text>
@@ -251,33 +461,68 @@ export default function DriveStyleReport({
           ))}
         </View>
 
-        <Text style={styles.footer}>
-          Drive Style - Customer Profile
+        <Text style={styles.paragraph}>
+          Drive Style looks beyond badge appeal alone. The recommendation is
+          shaped around fit, ownership confidence, comfort, running costs,
+          lifestyle use, and whether the vehicle suits how you actually intend
+          to use it.
         </Text>
+
+        <ReportFooter />
       </Page>
 
       <Page size="A4" style={styles.page}>
-        <Text style={styles.sectionKicker}>Top Pick</Text>
-        <Text style={styles.sectionTitle}>Primary Recommendation</Text>
+        <Text style={styles.sectionKicker}>Primary Recommendation</Text>
+        <Text style={styles.sectionTitle}>Why this recommendation fits</Text>
 
         {topModel ? (
-          <View style={styles.highlightCard}>
-            <Text style={styles.modelName}>{topModel.name}</Text>
+          <View style={styles.recommendationCard}>
+            {topImage ? (
+              <Image src={topImage} style={styles.heroImage} />
+            ) : null}
 
+            <Text style={styles.modelName}>{topModel.name}</Text>
             <Text style={styles.paragraph}>{topModel.why}</Text>
 
             {formatPrice(topModel.msrp) ? (
               <Text style={styles.price}>
-                Indicative price: {formatPrice(topModel.msrp)}
+                Indicative pricing: {formatPrice(topModel.msrp)}
               </Text>
-            ) : null}
+            ) : (
+              <Text style={styles.price}>
+                Indicative pricing: Confirm latest market pricing before
+                purchase.
+              </Text>
+            )}
 
-            <View style={styles.tagRow}>
-              {(topModel.tags || []).map((tag) => (
-                <Text key={tag} style={styles.tag}>
-                  {tag}
-                </Text>
-              ))}
+            <TagRow tags={topModel.tags} />
+
+            <View style={styles.divider} />
+
+            <View style={styles.twoColumnRow}>
+              <View style={styles.column}>
+                <Text style={styles.miniTitle}>Strengths</Text>
+                <BulletList
+                  items={topModel.strengths}
+                  fallback={[
+                    "Strong overall fit for your stated priorities.",
+                    "Balanced mix of comfort, presence and usability.",
+                    "Well suited to everyday ownership rather than only showroom appeal.",
+                  ]}
+                />
+              </View>
+
+              <View style={styles.column}>
+                <Text style={styles.miniTitle}>Watch-outs</Text>
+                <BulletList
+                  items={topModel.watchOuts}
+                  fallback={[
+                    "Confirm service, warranty and maintenance-plan status.",
+                    "Check insurance cost before committing.",
+                    "Compare total finance cost, not only monthly repayment.",
+                  ]}
+                />
+              </View>
             </View>
           </View>
         ) : (
@@ -286,163 +531,65 @@ export default function DriveStyleReport({
           </Text>
         )}
 
-        <Text style={styles.sectionKicker}>Alternatives</Text>
-        <Text style={styles.sectionTitle}>Shortlist Options</Text>
+        <Text style={styles.paragraph}>
+          Before committing, validate the specific vehicle condition, service
+          history, accident history, finance structure, warranty position and
+          insurance premium.
+        </Text>
 
-        {(advice.models || []).map((model, index) => (
-          <View key={model.name} style={styles.card}>
-            <Text style={styles.modelName}>
-              {index === 0 ? "Top Recommendation" : `Option ${index + 1}`}:{" "}
-              {model.name}
-            </Text>
+        <ReportFooter />
+      </Page>
 
-            <Text style={styles.paragraph}>{model.why}</Text>
+      <Page size="A4" style={styles.page}>
+        <Text style={styles.sectionKicker}>Alternative Recommendations</Text>
+        <Text style={styles.sectionTitle}>Shortlist options</Text>
 
-            {formatPrice(model.msrp) ? (
-              <Text style={styles.price}>
-                Indicative price: {formatPrice(model.msrp)}
-              </Text>
-            ) : null}
+        {alternatives.length ? (
+          alternatives.map((model, index) => {
+            const src = imageSrc(model.imageUrl);
 
-            <View style={styles.tagRow}>
-              {(model.tags || []).map((tag) => (
-                <Text key={tag} style={styles.tag}>
-                  {tag}
+            return (
+              <View key={model.name} style={styles.altCard}>
+                {src ? <Image src={src} style={styles.altImage} /> : null}
+
+                <Text style={styles.modelName}>
+                  Option {index + 2}: {model.name}
                 </Text>
-              ))}
-            </View>
+
+                <Text style={styles.paragraph}>{model.why}</Text>
+
+                {formatPrice(model.msrp) ? (
+                  <Text style={styles.price}>
+                    Indicative pricing: {formatPrice(model.msrp)}
+                  </Text>
+                ) : null}
+
+                <TagRow tags={model.tags} />
+              </View>
+            );
+          })
+        ) : (
+          <View style={styles.altCard}>
+            <Text style={styles.modelName}>No alternatives supplied</Text>
+            <Text style={styles.paragraph}>
+              Your current recommendation data only includes one primary model.
+              Add more models to the recommendation engine to populate this
+              section.
+            </Text>
           </View>
-        ))}
-
-        <Text style={styles.footer}>
-          Drive Style - Vehicle Shortlist
-        </Text>
-      </Page>
-
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.sectionKicker}>Ownership</Text>
-        <Text style={styles.sectionTitle}>Finance Considerations</Text>
-
-        <Text style={styles.paragraph}>
-          When financing a vehicle, compare more than the monthly repayment.
-          Consider the interest rate, deposit, balloon payment, contract term,
-          initiation fees, monthly service fees and total cost over the full term.
-        </Text>
-
-        <Text style={styles.paragraph}>
-          A lower monthly repayment can sometimes hide a more expensive deal if
-          the term is longer or if a large balloon payment remains at the end.
-        </Text>
-
-        <Text style={styles.paragraph}>
-          Before signing, ask the finance provider for the total repayment amount
-          over the full agreement, not only the monthly instalment.
-        </Text>
+        )}
 
         <View style={styles.divider} />
 
-        <Text style={styles.sectionTitle}>Insurance Considerations</Text>
-
-        <Text style={styles.paragraph}>
-          Insurance should be checked before committing to the vehicle. Premiums
-          can vary based on vehicle value, repair cost, theft risk, driver
-          profile, location, excess structure and tracking requirements.
-        </Text>
-
-        <Text style={styles.paragraph}>
-          Compare at least two insurers and confirm whether the quote includes
-          comprehensive cover, excesses, roadside assistance, windscreen cover and
-          credit shortfall cover if financed.
-        </Text>
-
-        <Text style={styles.footer}>
-          Drive Style - Finance and Insurance
-        </Text>
-      </Page>
-
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.sectionKicker}>Plans</Text>
-        <Text style={styles.sectionTitle}>Service Plans vs Maintenance Plans</Text>
-
-        <Text style={styles.paragraph}>
-          A service plan usually covers scheduled services at the manufacturer’s
-          required intervals. It does not automatically mean all repairs are
-          covered.
-        </Text>
-
-        <Text style={styles.paragraph}>
-          A maintenance plan is broader and may include selected wear-and-tear
-          items, depending on the provider and policy wording.
-        </Text>
-
-        <Text style={styles.paragraph}>
-          Always confirm what is included, what is excluded, when the plan
-          expires, whether it is transferable, and whether claims must be handled
-          through specific dealerships or repair networks.
-        </Text>
-
-        <View style={styles.divider} />
-
-        <Text style={styles.sectionTitle}>New Owner Hints & Tips</Text>
-
-        <Text style={styles.checklistItem}>
-          • Confirm spare keys, service history and licence status before payment.
-        </Text>
-
-        <Text style={styles.checklistItem}>
-          • Check tyre condition, accident history and whether all accessories are included.
-        </Text>
-
-        <Text style={styles.checklistItem}>
-          • Keep finance, insurance, warranty and plan documents together.
-        </Text>
-
-        <Text style={styles.checklistItem}>
-          • Confirm whether the warranty, service plan or maintenance plan transfers to you.
-        </Text>
-
-        <Text style={styles.checklistItem}>
-          • Avoid rushing final paperwork if finance, insurance or inspection details are unclear.
-        </Text>
-
-        <Text style={styles.footer}>
-          Drive Style - Ownership Preparation
-        </Text>
-      </Page>
-
-      <Page size="A4" style={styles.page}>
         <Text style={styles.sectionKicker}>Final View</Text>
         <Text style={styles.sectionTitle}>Drive Style Verdict</Text>
 
         <Text style={styles.paragraph}>
-          {advice.verdict ||
-            "Your shortlist has been selected around real-world fit, ownership confidence, and long-term usability."}
+          {advice.closing ||
+            "Use this report as a decision guide before committing to finance, insurance, dealer conversations or final purchase paperwork."}
         </Text>
 
-        <Text style={styles.paragraph}>
-          The best vehicle decision is not simply the most exciting option on
-          paper. It is the one that still feels right after the first few months,
-          once daily use, running costs, comfort and ownership responsibility
-          become real.
-        </Text>
-
-        <Text style={styles.paragraph}>
-          Use this report as a decision guide before committing to finance,
-          insurance, dealer conversations or final purchase paperwork.
-        </Text>
-
-        <View style={styles.divider} />
-
-        <Text style={styles.sectionTitle}>Next Step</Text>
-
-        <Text style={styles.paragraph}>
-          If you selected Gold or Platinum, a Drive Style vehicle specialist will
-          use this report as the basis for your follow-up conversation.
-        </Text>
-
-        <Text style={styles.footer}>
-          Drive Style - Final Recommendation
-        </Text>
+        <ReportFooter />
       </Page>
     </Document>
   );
