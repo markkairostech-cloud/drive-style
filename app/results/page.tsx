@@ -78,7 +78,7 @@ function ResultsPageContent() {
     const name =
       localStorage.getItem("driveStyleName") || "";
 
-    await fetch(
+    const response = await fetch(
       "/api/recommendation/send",
       {
         method: "POST",
@@ -94,6 +94,12 @@ function ResultsPageContent() {
       }
     );
 
+    console.log("Send response status:", response.status);
+
+    const result = await response.json();
+
+    console.log("Send response:", result);
+    
     alert(
       "Drive Style recommendation request received."
     );
