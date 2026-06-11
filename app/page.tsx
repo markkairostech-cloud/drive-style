@@ -58,7 +58,7 @@ export default function HomePage() {
             “Helping YOU choose what drives you!”
           </p>
 
-          <p className="mt-10 text-3xl sm:text-4xl lg:text-5xl font-semibold text-yellow-300">
+          <p className="mt-10 text-3xl sm:text-4xl lg:text-5xl font-semibold text-white">
             • Giving <span className="font-bold">YOU</span> Confidence in your every Car Choice!
           </p>
 
@@ -71,7 +71,7 @@ export default function HomePage() {
                 How It Works...
               </h2>
 
-              <div className="mt-6 space-y-6 text-yellow-300">
+              <div className="mt-6 space-y-6 text-white">
                 <div>
                   <p className="font-bold text-xl">1. We get to know you</p>
                   <p className="text-lg">
@@ -88,10 +88,10 @@ export default function HomePage() {
                 </div>
 
                 <div>
-                  <p className="font-bold text-xl">3. We shortlist your smart-match options</p>
+                  <p className="font-bold text-xl">3. You’ll see clear comparisons —</p>
                   <p className="text-lg">
-                    Complete with pros/cons, cost implications, risks,
-                    comfort, performance, and maintenance considerations.
+                    highlights, trade-offs, cost considerations, comfort, performance, and upkeep insights. 
+                    Everything laid out so you can weigh what matters most to you.
                   </p>
                 </div>
 
