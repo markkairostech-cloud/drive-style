@@ -44,7 +44,7 @@ export default function HomePage() {
 
             {/* BUTTON 1 */}
             <Link href="/quiz" className="cine-btn-primary w-fit">
-              Get your free recommendation!
+              Try for free!
             </Link>
 
           </div>
