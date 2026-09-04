@@ -3,7 +3,6 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
 
   --ds-bg: #04060b;
   --ds-text: rgba(255,255,255,0.92);
@@ -33,6 +32,7 @@ body {
 /* --- Cinematic system (full glow / metallic) --- */
 @layer components {
   .cine-page {
+    color-scheme: dark;
     @apply min-h-screen relative overflow-x-hidden;
   }
 
