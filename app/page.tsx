@@ -262,7 +262,7 @@ export default function HomePage() {
 
               <p className="mx-auto mt-6 max-w-4xl text-lg leading-8 text-slate-1100">
                 Take our quick seven-question assessment to unlock your personal
-                vehicle-needs profile. No pushy salespeople—just clear,
+                vehicle-needs profile. No pushy salespeople — just clear,
                 independent guidance.
               </p>
 
