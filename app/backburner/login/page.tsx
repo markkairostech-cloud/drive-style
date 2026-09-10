@@ -9,7 +9,7 @@ export default function BackburnerLoginPage() {
   const router = useRouter();
   const supabase = getSupabaseBrowser();
 
-  const [email, setEmail] = useState("mark.kairostech@gmail.com");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -59,10 +59,7 @@ export default function BackburnerLoginPage() {
             project partners.
           </p>
 
-          <form
-            onSubmit={handleLogin}
-            className="mt-6 space-y-4"
-          >
+          <form onSubmit={handleLogin} className="mt-6 space-y-4">
             <div>
               <label className="mb-1 block text-sm font-semibold text-slate-700">
                 Email address
@@ -74,7 +71,7 @@ export default function BackburnerLoginPage() {
                 onChange={(event) => setEmail(event.target.value)}
                 autoComplete="email"
                 required
-                className="w-full rounded-md border border-slate-300 px-3 py-2.5 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-slate-900 caret-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
@@ -90,7 +87,7 @@ export default function BackburnerLoginPage() {
                 autoComplete="current-password"
                 required
                 className="w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-slate-900 caret-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                />
+              />
             </div>
 
             {errorMessage && (
