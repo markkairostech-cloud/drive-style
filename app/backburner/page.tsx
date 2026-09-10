@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
@@ -26,6 +26,7 @@ type BacklogItem = {
   description: string;
   comments: Comment[];
   status: string;
+  priority: string;
   dateCaptured: string;
   dateNeeded: string;
   lastUpdated: string;
@@ -55,6 +56,7 @@ type SupabaseBacklogItem = {
   name: string;
   description: string | null;
   status: string;
+  priority: string;
   date_captured: string;
   date_needed: string | null;
   completed_at: string | null;
@@ -153,6 +155,23 @@ function sortCollaborators(collaborators: Collaborator[]) {
   );
 }
 
+function prioritySortValue(priority: string) {
+  if (priority === "Critical") return 1;
+  if (priority === "High") return 2;
+  if (priority === "Medium") return 3;
+  if (priority === "Low") return 4;
+
+  return 99;
+}
+
+function sortBacklogItemsByPriority(items: BacklogItem[]) {
+  return [...items].sort(
+    (a, b) =>
+      prioritySortValue(a.priority) - prioritySortValue(b.priority) ||
+      a.backlogNumber - b.backlogNumber
+  );
+}
+
 function isCompletedOlderThan30Days(item: BacklogItem) {
   if (
     item.status !== "Completed" ||
@@ -180,6 +199,9 @@ export default function BackburnerPage() {
     () => getSupabaseBrowser(),
     []
   );
+
+  const editorRef = useRef<HTMLDivElement | null>(null);
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
 
   const [backlogItems, setBacklogItems] =
     useState<BacklogItem[]>([]);
@@ -369,6 +391,7 @@ export default function BackburnerPage() {
             name,
             description,
             status,
+            priority,
             date_captured,
             date_needed,
             completed_at,
@@ -476,6 +499,7 @@ export default function BackburnerPage() {
               row.description ?? "",
             comments,
             status: row.status,
+            priority: row.priority ?? "Medium",
             dateCaptured:
               row.date_captured,
             dateNeeded:
@@ -496,13 +520,15 @@ export default function BackburnerPage() {
       );
 
       const firstVisibleItem =
-        mappedItems.find(
-          (item) =>
-            !item.deletedAt &&
-            !isCompletedOlderThan30Days(
-              item
-            )
-        );
+        sortBacklogItemsByPriority(
+          mappedItems.filter(
+            (item) =>
+              !item.deletedAt &&
+              !isCompletedOlderThan30Days(
+                item
+              )
+          )
+        )[0];
 
       setSelectedItem(
         firstVisibleItem ??
@@ -517,21 +543,23 @@ export default function BackburnerPage() {
   }, [router, supabase]);
 
   const activeBacklogItems =
-    backlogItems.filter((item) => {
-      if (item.deletedAt) {
-        return false;
-      }
+    sortBacklogItemsByPriority(
+      backlogItems.filter((item) => {
+        if (item.deletedAt) {
+          return false;
+        }
 
-      if (
-        isCompletedOlderThan30Days(
-          item
-        )
-      ) {
-        return false;
-      }
+        if (
+          isCompletedOlderThan30Days(
+            item
+          )
+        ) {
+          return false;
+        }
 
-      return true;
-    });
+        return true;
+      })
+    );
 
   const deletedBacklogItems =
     backlogItems.filter(
@@ -635,12 +663,24 @@ export default function BackburnerPage() {
       description: "",
       comments: [],
       status: "New",
+      priority: "Medium",
       dateCaptured: getToday(),
       dateNeeded: "",
       lastUpdated: "",
       completedAt: null,
       deletedAt: null,
     });
+
+    window.setTimeout(() => {
+      editorRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+
+      nameInputRef.current?.focus({
+        preventScroll: true,
+      });
+    }, 50);
   };
 
   const handleToggleOwner = (
@@ -784,6 +824,8 @@ export default function BackburnerPage() {
                 : null,
             status:
               selectedItem.status,
+            priority:
+              selectedItem.priority,
             date_captured:
               selectedItem.dateCaptured,
             date_needed:
@@ -795,6 +837,7 @@ export default function BackburnerPage() {
           .select(`
             id,
             backlog_number,
+            priority,
             updated_at,
             completed_at
           `)
@@ -970,6 +1013,8 @@ export default function BackburnerPage() {
               : null,
           status:
             selectedItem.status,
+          priority:
+            selectedItem.priority,
           date_needed:
             selectedItem.dateNeeded ||
             null,
@@ -1618,6 +1663,9 @@ export default function BackburnerPage() {
                     Name
                   </th>
                   <th className="px-4 py-3 font-semibold">
+                    Priority
+                  </th>
+                  <th className="px-4 py-3 font-semibold">
                     Owner
                   </th>
                   <th className="px-4 py-3 font-semibold">
@@ -1639,7 +1687,7 @@ export default function BackburnerPage() {
                 {loading ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="px-4 py-12 text-center text-sm text-slate-500"
                     >
                       Loading Backburner from Supabase...
@@ -1649,7 +1697,7 @@ export default function BackburnerPage() {
                   0 ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="px-4 py-10 text-center text-sm text-slate-500"
                     >
                       No backlog items match the current filters.
@@ -1681,6 +1729,22 @@ export default function BackburnerPage() {
 
                         <td className="px-4 py-3 font-medium">
                           {item.name}
+                        </td>
+
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                              item.priority === "Critical"
+                                ? "bg-red-100 text-red-700"
+                                : item.priority === "High"
+                                ? "bg-amber-100 text-amber-700"
+                                : item.priority === "Low"
+                                ? "bg-slate-100 text-slate-500"
+                                : "bg-blue-100 text-blue-700"
+                            }`}
+                          >
+                            {item.priority}
+                          </span>
                         </td>
 
                         <td className="px-4 py-3 text-slate-600">
@@ -1754,7 +1818,10 @@ export default function BackburnerPage() {
         </div>
 
         {/* EDITOR */}
-        <div className="mt-5 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div
+          ref={editorRef}
+          className="mt-5 scroll-mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+        >
           <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
             <div>
               <h2 className="text-xl font-bold">
@@ -1874,6 +1941,7 @@ export default function BackburnerPage() {
                     </label>
 
                     <input
+                      ref={nameInputRef}
                       type="text"
                       value={
                         selectedItem.name
@@ -1916,7 +1984,44 @@ export default function BackburnerPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <div>
+                      <label className="mb-1 block text-sm font-medium">
+                        Priority
+                      </label>
+
+                      <select
+                        value={
+                          selectedItem.priority
+                        }
+                        onChange={(event) =>
+                          setSelectedItem({
+                            ...selectedItem,
+                            priority:
+                              event.target
+                                .value,
+                          })
+                        }
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 outline-none"
+                      >
+                        <option>
+                          Critical
+                        </option>
+
+                        <option>
+                          High
+                        </option>
+
+                        <option>
+                          Medium
+                        </option>
+
+                        <option>
+                          Low
+                        </option>
+                      </select>
+                    </div>
+
                     <div>
                       <label className="mb-1 block text-sm font-medium">
                         Status
