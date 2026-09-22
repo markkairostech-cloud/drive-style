@@ -17,8 +17,14 @@ type Collaborator = {
   displayName: string;
 };
 
+type Project = {
+  id: string;
+  name: string;
+};
+
 type BacklogItem = {
   databaseId: string;
+  projectId: string;
   id: string;
   backlogNumber: number;
   name: string;
@@ -52,6 +58,7 @@ type SupabaseComment = {
 
 type SupabaseBacklogItem = {
   id: string;
+  project_id: string;
   backlog_number: number;
   name: string;
   description: string | null;
@@ -218,6 +225,9 @@ export default function BackburnerPage() {
   const [currentProjectId, setCurrentProjectId] =
     useState("");
 
+  const [workspaceProjects, setWorkspaceProjects] =
+    useState<Project[]>([]);
+
   const [isNewItem, setIsNewItem] =
     useState(false);
 
@@ -318,33 +328,45 @@ export default function BackburnerPage() {
       );
 
       const {
-        data: projectRow,
+        data: projectRows,
         error: projectError,
       } = await supabase
         .from("backburner_projects")
-        .select("id")
+        .select("id, name")
         .eq(
           "workspace_id",
           collaboratorRow.workspace_id
         )
-        .eq("name", "Core Platform")
-        .single();
+        .order("name");
 
       if (
         projectError ||
-        !projectRow
+        !projectRows ||
+        projectRows.length === 0
       ) {
         setLoadError(
-          "The Core Platform project could not be found."
+          "No Backburner projects could be found for this workspace."
         );
 
         setLoading(false);
         return;
       }
 
-      setCurrentProjectId(
-        projectRow.id
+      const projects: Project[] = projectRows.map(
+        (project) => ({
+          id: project.id,
+          name: project.name,
+        })
       );
+
+      setWorkspaceProjects(projects);
+
+      const initialProject =
+        projects.find(
+          (project) => project.name === "Core Platform"
+        ) ?? projects[0];
+
+      setCurrentProjectId(initialProject.id);
 
       const {
         data: collaboratorRows,
@@ -387,6 +409,7 @@ export default function BackburnerPage() {
           .from("backburner_items")
           .select(`
             id,
+            project_id,
             backlog_number,
             name,
             description,
@@ -414,6 +437,10 @@ export default function BackburnerPage() {
               )
             )
           `)
+          .in(
+            "project_id",
+            projects.map((project) => project.id)
+          )
           .order(
             "backlog_number",
             {
@@ -488,6 +515,7 @@ export default function BackburnerPage() {
 
           return {
             databaseId: row.id,
+            projectId: row.project_id,
             id: formatBacklogId(
               row.backlog_number
             ),
@@ -523,6 +551,7 @@ export default function BackburnerPage() {
         sortBacklogItemsByPriority(
           mappedItems.filter(
             (item) =>
+              item.projectId === initialProject.id &&
               !item.deletedAt &&
               !isCompletedOlderThan30Days(
                 item
@@ -531,9 +560,7 @@ export default function BackburnerPage() {
         )[0];
 
       setSelectedItem(
-        firstVisibleItem ??
-          mappedItems[0] ??
-          null
+        firstVisibleItem ?? null
       );
 
       setLoading(false);
@@ -542,9 +569,14 @@ export default function BackburnerPage() {
     loadBacklog();
   }, [router, supabase]);
 
+  const currentProjectBacklogItems =
+    backlogItems.filter(
+      (item) => item.projectId === currentProjectId
+    );
+
   const activeBacklogItems =
     sortBacklogItemsByPriority(
-      backlogItems.filter((item) => {
+      currentProjectBacklogItems.filter((item) => {
         if (item.deletedAt) {
           return false;
         }
@@ -562,7 +594,7 @@ export default function BackburnerPage() {
     );
 
   const deletedBacklogItems =
-    backlogItems.filter(
+    currentProjectBacklogItems.filter(
       (item) => Boolean(item.deletedAt)
     );
 
@@ -610,6 +642,33 @@ export default function BackburnerPage() {
       );
     });
 
+  const handleProjectChange = (projectId: string) => {
+    setCurrentProjectId(projectId);
+    setIsNewItem(false);
+    setSaveMessage("");
+    setSaveError("");
+    setCommentError("");
+    setCommentText("");
+    setShowDeletedItems(false);
+
+    setStatusFilter("All");
+    setOwnerFilter("All Owners");
+    setDateFilter("");
+    setSearchTerm("");
+
+    const firstVisibleItem =
+      sortBacklogItemsByPriority(
+        backlogItems.filter(
+          (item) =>
+            item.projectId === projectId &&
+            !item.deletedAt &&
+            !isCompletedOlderThan30Days(item)
+        )
+      )[0] ?? null;
+
+    setSelectedItem(firstVisibleItem);
+  };
+
   const handleClearFilters = () => {
     setStatusFilter("All");
     setOwnerFilter("All Owners");
@@ -654,6 +713,7 @@ export default function BackburnerPage() {
 
     setSelectedItem({
       databaseId: "",
+      projectId: currentProjectId,
       id: "New",
       backlogNumber: 0,
       name: "",
@@ -836,6 +896,7 @@ export default function BackburnerPage() {
           })
           .select(`
             id,
+            project_id,
             backlog_number,
             priority,
             updated_at,
@@ -1306,13 +1367,16 @@ export default function BackburnerPage() {
       );
 
       const nextVisibleItem =
-        updatedItems.find(
-          (item) =>
-            !item.deletedAt &&
-            !isCompletedOlderThan30Days(
-              item
-            )
-        );
+        sortBacklogItemsByPriority(
+          updatedItems.filter(
+            (item) =>
+              item.projectId === currentProjectId &&
+              !item.deletedAt &&
+              !isCompletedOlderThan30Days(
+                item
+              )
+          )
+        )[0];
 
       setSelectedItem(
         nextVisibleItem ?? null
@@ -1452,10 +1516,18 @@ export default function BackburnerPage() {
                 Project
               </span>
 
-              <select className="rounded-md border border-slate-200 bg-white px-4 py-2 text-slate-800 outline-none">
-                <option>
-                  Core Platform
-                </option>
+              <select
+                value={currentProjectId}
+                onChange={(event) =>
+                  handleProjectChange(event.target.value)
+                }
+                className="rounded-md border border-slate-200 bg-white px-4 py-2 text-slate-800 outline-none"
+              >
+                {workspaceProjects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -1496,7 +1568,7 @@ export default function BackburnerPage() {
             !loadError && (
               <div className="flex items-center gap-2">
                 <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-green-700 shadow-sm">
-                  {backlogItems.length} database items
+                  {currentProjectBacklogItems.length} database items
                 </div>
 
                 <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm">

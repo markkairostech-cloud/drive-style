@@ -280,7 +280,7 @@ export default function HomePage() {
           </div>
         </section>
 
-      {/* Footer */}
+{/* Footer */}
       <footer className="border-t border-slate-200 bg-slate-50">
         <div className="mx-auto flex max-w-7xl flex-col gap-5 px-5 py-8 text-center sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:text-left">
           <div>
@@ -294,16 +294,16 @@ export default function HomePage() {
           </div>
 
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-slate-600">
-            <Link href="/quiz" className="hover:text-[#087f8c]">
-              Free assessment
-            </Link>
-
-            <Link href="/services" className="hover:text-[#087f8c]">
-              Our services
+            <Link href="/about" className="hover:text-[#087f8c]">
+              About
             </Link>
 
             <Link href="/contact" className="hover:text-[#087f8c]">
-              Contact us
+              Contact
+            </Link>
+
+            <Link href="/disclaimer" className="hover:text-[#087f8c]">
+              Disclaimer
             </Link>
 
             <Link href="/terms" className="hover:text-[#087f8c]">
