@@ -347,7 +347,7 @@ export default function QuizPage() {
         style={{ backgroundImage: "url('/images/quiz/quiz-hero.png')" }}
       >
         <div className="relative z-10 mx-auto grid min-h-[820px] max-w-[1500px] items-center gap-10 px-5 py-12 sm:px-8 lg:grid-cols-[0.82fr_1.18fr] lg:px-10 lg:py-14">
-          <div className="self-start pt-5 lg:pt-10">
+          <div className="self-start pt-2 lg:pt-0">
             <div className="max-w-[500px] rounded-[2rem] bg-white/58 p-6 shadow-sm backdrop-blur-[2px] sm:p-8 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none">
               <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#087f8c]">
                 Your RightCar4Me assessment
