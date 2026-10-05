@@ -69,7 +69,7 @@ const categories: Array<{
 }> = [
   {
     id: "family",
-    title: "Family & passengers",
+    title: "Passengers and Utility Space",
     description: "Space and practicality for the people who travel with you.",
     image: "/images/quiz/quiz-family-passengers.png",
   },

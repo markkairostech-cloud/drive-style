@@ -192,11 +192,11 @@ export default function HomePage() {
                   href="/quiz"
                   className="inline-flex min-h-14 items-center justify-center rounded-xl bg-[#00a9a5] px-8 py-4 text-base font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#008f91] focus:outline-none focus:ring-4 focus:ring-cyan-300/40"
                 >
-                  Start My 60-Second Match
+                  Start My 3 Minute Match
                 </Link>
 
                 <p className="mt-3 text-sm font-medium text-slate-600">
-                  7 quick questions · No dealer calls · No obligation
+                  6 quick questions · No dealer calls · No obligation
                 </p>
               </div>
             </div>
