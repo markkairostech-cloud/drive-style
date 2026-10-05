@@ -349,7 +349,7 @@ export default function QuizPage() {
         <div className="relative z-10 mx-auto grid min-h-[820px] max-w-[1500px] items-center gap-10 px-5 py-12 sm:px-8 lg:grid-cols-[0.82fr_1.18fr] lg:px-10 lg:py-14">
           <div className="self-start pt-2 lg:pt-0">
             <div className="max-w-[500px] rounded-[2rem] bg-white/58 p-6 shadow-sm backdrop-blur-[2px] sm:p-8 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none">
-              <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#087f8c]">
+              <p className="text-sm font-bold uppercase tracking-[0.2em] text-black">
                 Your RightCar4Me assessment
               </p>
 
@@ -390,7 +390,7 @@ export default function QuizPage() {
             ) : (
               <>
                 <div className="mt-7">
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#087f8c]">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-black">
                     Your RightCar4Me assessment
                   </p>
                   <h2 className="mt-3 text-3xl font-bold leading-tight tracking-tight text-[#071d3b] sm:text-4xl">
@@ -442,9 +442,7 @@ export default function QuizPage() {
                               </p>
                               <p
                                 className={`mt-3 text-xs font-bold uppercase tracking-[0.12em] ${
-                                  isComplete
-                                    ? "text-[#087f8c]"
-                                    : "text-slate-400"
+                                  isComplete ? "text-black" : "text-slate-400"
                                 }`}
                               >
                                 {isComplete
@@ -506,21 +504,18 @@ function QuizHeader() {
         </Link>
 
         <nav className="hidden items-center gap-7 text-sm font-semibold text-[#071d3b] lg:flex">
-          <Link
-            href="/#how-it-works"
-            className="transition hover:text-[#087f8c]"
-          >
+          <Link href="/#how-it-works" className="transition hover:text-black">
             How it works
           </Link>
-          <Link href="/about" className="transition hover:text-[#087f8c]">
+          <Link href="/about" className="transition hover:text-black">
             Why RightCar4Me
           </Link>
-          <Link href="/about" className="transition hover:text-[#087f8c]">
+          <Link href="/about" className="transition hover:text-black">
             About
           </Link>
           <Link
             href="/#car-buying-tips"
-            className="transition hover:text-[#087f8c]"
+            className="transition hover:text-black"
           >
             Car buying tips
           </Link>
@@ -551,7 +546,7 @@ function Progress({
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#071d3b]">
           Assessment progress
         </p>
-        <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#087f8c]">
+        <p className="text-xs font-bold uppercase tracking-[0.12em] text-black">
           {label}
         </p>
       </div>
@@ -614,7 +609,7 @@ function CategoryPanel({
       <button
         type="button"
         onClick={onBack}
-        className="inline-flex items-center gap-2 text-sm font-bold text-[#087f8c] hover:text-[#071d3b]"
+        className="inline-flex items-center gap-2 text-sm font-bold text-black hover:opacity-70"
       >
         <span aria-hidden>←</span> Back to all sections
       </button>
@@ -622,7 +617,7 @@ function CategoryPanel({
       <div className="mt-4 flex items-center gap-3">
         <CategoryIcon id={id} large />
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#087f8c]">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-black">
             Assessment section
           </p>
           <h2 className="mt-1 text-3xl font-bold tracking-tight text-[#071d3b]">
@@ -1097,19 +1092,19 @@ function LandingFooter() {
         </div>
 
         <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs text-slate-600">
-          <Link href="/about" className="hover:text-[#087f8c]">
+          <Link href="/about" className="hover:text-black">
             About
           </Link>
-          <Link href="/contact" className="hover:text-[#087f8c]">
+          <Link href="/contact" className="hover:text-black">
             Contact
           </Link>
-          <Link href="/disclaimer" className="hover:text-[#087f8c]">
+          <Link href="/disclaimer" className="hover:text-black">
             Disclaimer
           </Link>
-          <Link href="/terms" className="hover:text-[#087f8c]">
+          <Link href="/terms" className="hover:text-black">
             Terms
           </Link>
-          <Link href="/privacy" className="hover:text-[#087f8c]">
+          <Link href="/privacy" className="hover:text-black">
             Privacy
           </Link>
         </div>
