@@ -183,7 +183,7 @@ export default function HomePage() {
 
               <div className="mt-8 rounded-2xl border-l-4 border-[#00a9a5] bg-slate-50 p-5">
                 <p className="text-lg font-semibold leading-7 text-[#071d3b]">
-                  Stop guessing. Seven questions can reveal which cars actually
+                  Stop guessing, Six questions can reveal which cars actually
                   fit your lifestyle, needs and budget.
                 </p>
               </div>
@@ -261,7 +261,7 @@ export default function HomePage() {
               </p>
 
               <p className="mx-auto mt-6 max-w-4xl text-lg leading-8 text-slate-1100">
-                Take our quick seven-question assessment to unlock your personal
+                Take our quick six-question assessment to unlock your personal
                 vehicle-needs profile. No pushy salespeople — just clear,
                 independent guidance.
               </p>
@@ -270,7 +270,7 @@ export default function HomePage() {
                 href="/quiz"
                 className="mt-8 inline-flex min-h-14 items-center justify-center rounded-xl bg-[#00a9a5] px-8 py-4 text-base font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#008f91] focus:outline-none focus:ring-4 focus:ring-cyan-300/40"
               >
-                Start My 60-Second Match
+                Start My 3 Minute Match
               </Link>
 
               <p className="mt-5 text-lg font-bold text-slate-800 sm:text-xl">
